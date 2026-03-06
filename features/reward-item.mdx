@@ -1,0 +1,222 @@
+---
+title: Reward Item
+description: Time-based reward system that grants items for continuous playtime
+---
+
+The Reward Item feature provides players with items based on their continuous online time. Progress is account-wide and resets when characters leave the game world.
+
+## Overview
+
+The Reward Item system:
+- Tracks playtime across the entire account
+- Grants items at specified time intervals
+- Displays progress through a client-side progress bar
+- Resets index after all rewards are received
+- Resets current progress when leaving the game world
+
+<Warning>
+Progress is account-wide. The progress of the current item will reset if a character leaves the game world. Do not expect the progress bar to synchronize perfectly.
+</Warning>
+
+## Configuration
+
+### File Location
+
+The library expects **OnlineTimePrize.ini** to be in the **PSM_Client/Bin/Data** directory.
+
+```plaintext title="Configuration File Path"
+PSM_Client/Bin/Data/OnlineTimePrize.ini
+```
+
+### Configuration Requirements
+
+<Note>
+The client expects to receive exactly 20 item units. Configure your `OnlineTimePrize.ini` file with 20 reward entries.
+</Note>
+
+<Steps>
+  <Step title="Create Configuration File">
+    Create `OnlineTimePrize.ini` with 20 reward item entries.
+  </Step>
+
+  <Step title="Define Time Intervals">
+    Specify the time in minutes required for each reward tier.
+  </Step>
+
+  <Step title="Configure Reward Items">
+    Set the item IDs and quantities for each reward tier.
+  </Step>
+
+  <Step title="Place Configuration File">
+    Place the file in `PSM_Client/Bin/Data/OnlineTimePrize.ini`.
+  </Step>
+</Steps>
+
+## System Messages
+
+The following system messages are used by the Reward Item feature:
+
+| Message ID | Text |
+|------------|------|
+| 2044 | "The keep-alive event has ended." |
+| 7188 | "Could not receive your reward because you do not have space in your inventory." |
+| 7189 | "Bronze medal received" |
+| 7190 | "Silver medal received" |
+| 7191 | "Gold medal received" |
+| 7192 | "Recurring player item received" |
+
+<Note>
+Ensure these system messages are present in your client's message file for proper feedback to players.
+</Note>
+
+## Timeout Calculation
+
+The timeout system adds an additional 15 seconds to each reward interval to match client behavior.
+
+```cpp title="Timeout Calculation"
+auto minutes = rewardItem[index].minutes;
+auto timeout = GetTickCount() + ((minutes * 60000) + 15000);
+```
+
+### Timeout Breakdown
+
+<ParamField path="minutes" type="number">
+  The configured time in minutes from `OnlineTimePrize.ini`
+</ParamField>
+
+<ParamField path="minutes * 60000" type="calculation">
+  Converts minutes to milliseconds (1 minute = 60,000 ms)
+</ParamField>
+
+<ParamField path="+ 15000" type="adjustment">
+  Adds 15,000 milliseconds (15 seconds) to match client behavior
+</ParamField>
+
+### Example Timeout Calculation
+
+```cpp title="Example: 30-minute Reward"
+// Configuration: 30 minutes
+auto minutes = 30;
+
+// Calculation
+auto timeout = GetTickCount() + ((30 * 60000) + 15000);
+// timeout = GetTickCount() + (1,800,000 + 15,000)
+// timeout = GetTickCount() + 1,815,000 ms
+// timeout = GetTickCount() + 30 minutes 15 seconds
+```
+
+## Progress Behavior
+
+### Account-Wide Progress
+
+Progress is tracked at the account level, not per character:
+- All characters on the account contribute to the same progress
+- Switching characters does not reset the timer
+- Total online time accumulates across all characters
+
+### Progress Reset Conditions
+
+<Warning>
+Progress resets in the following situations:
+</Warning>
+
+1. **Character leaves game world**: Progress for the current reward tier resets
+2. **All rewards received**: The reward index resets to the first item
+3. **Server restart**: Progress may reset depending on implementation
+
+### Progress Bar Synchronization
+
+<Note>
+Do not expect the progress bar to synchronize perfectly. There may be slight delays or desynchronization between the server and client progress indicators.
+</Note>
+
+## Client Compatibility
+
+| Locale | Patch | Supported |
+|--------|-------|-----------|
+| ES | 171 | ❌ |
+| PT | 182 | ✅ |
+| PT | 189 | ✅ |
+
+<Warning>
+The ES 171 client does not support the Reward Item feature. Use PT 182 or PT 189 for full compatibility.
+</Warning>
+
+## Configuration Example
+
+```ini title="OnlineTimePrize.ini - Example Configuration"
+[REWARD_1]
+MINUTES = 15
+ITEM_ID = 100001
+QUANTITY = 1
+
+[REWARD_2]
+MINUTES = 30
+ITEM_ID = 100002
+QUANTITY = 1
+
+[REWARD_3]
+MINUTES = 45
+ITEM_ID = 100003
+QUANTITY = 1
+
+[REWARD_4]
+MINUTES = 60
+ITEM_ID = 100004
+QUANTITY = 1
+
+[REWARD_5]
+MINUTES = 90
+ITEM_ID = 100005
+QUANTITY = 1
+
+# ... Continue up to REWARD_20
+```
+
+## Implementation Notes
+
+### Inventory Space
+
+Before granting a reward, the server checks for available inventory space:
+- If inventory is full, system message 7188 is displayed
+- The reward is not lost - it will be granted when space becomes available
+- Players should ensure they have free inventory slots
+
+### Index Reset
+
+When a player receives the final reward (item 20), the index automatically resets:
+- Progress starts again from reward 1
+- Previous progress is cleared
+- Players can continue earning rewards in a cycle
+
+## Troubleshooting
+
+<Accordion title="Progress bar not updating">
+  This is expected behavior. The progress bar may not synchronize perfectly with the server. Progress is still being tracked server-side.
+</Accordion>
+
+<Accordion title="Progress reset unexpectedly">
+  Check if the character left the game world:
+  - Disconnected
+  - Changed characters
+  - Entered certain zones
+  
+  Progress for the current reward tier resets in these situations.
+</Accordion>
+
+<Accordion title="Cannot receive reward">
+  Ensure you have available inventory space. System message 7188 indicates a full inventory. Free up space and the reward will be granted.
+</Accordion>
+
+<Accordion title="Configuration file not loading">
+  Verify the file is in the correct location:
+  ```
+  PSM_Client/Bin/Data/OnlineTimePrize.ini
+  ```
+  Ensure the file has exactly 20 reward entries.
+</Accordion>
+
+## Related Features
+
+- **Item Mall**: Point-based item purchasing system
+- **System Messages**: Message configuration for user feedback

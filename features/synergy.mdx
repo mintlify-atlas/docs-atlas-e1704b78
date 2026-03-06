@@ -1,0 +1,179 @@
+---
+title: "Synergy System"
+description: "Item set bonus system that provides additional stats when wearing complete equipment sets"
+---
+
+## Overview
+
+The Synergy system allows players to gain additional stat bonuses when wearing complete item sets. This feature reads set configurations from `SetItem.ini` and provides powerful bonuses based on the number of equipped items from the same set.
+
+<Note>
+Synergy requires both client and server-side configuration. The client reads encrypted `SetItem.SData` files while the server uses the `Drop` field in the Items table to identify set membership.
+</Note>
+
+## Installation
+
+<Steps>
+  <Step title="Configure Set Items">
+    Place `SetItem.ini` in the `PSM_Client/Bin/Data` directory on your server.
+  </Step>
+  
+  <Step title="Encrypt Client Data">
+    Ensure `SetItem.SData` is encrypted for the client. The client expects this file to be in encrypted format.
+    
+    <Warning>
+    The client will not load unencrypted SetItem.SData files. Use the proper encryption tool for your episode.
+    </Warning>
+  </Step>
+  
+  <Step title="Configure Database">
+    Set the `Drop` field in the Items table to assign items to specific sets. Items with the same `Drop` value belong to the same set.
+  </Step>
+</Steps>
+
+## Server Configuration
+
+### Database Setup
+
+The server uses the `Drop` field in the `PS_GameDefs.dbo.Items` table to identify which set an item belongs to. All items in a set should share the same `Drop` value.
+
+#### Example Query
+
+```sql
+USE PS_GameDefs
+SELECT ItemName, ItemID, [Drop] FROM Items WHERE [Drop]=64
+```
+
+#### Example Output
+
+| ItemName                  | ItemID | Drop |
+|---------------------------|--------|------|
+| Bright Emperor's Helmet   | 72003  | 64   |
+| Bright Emperor's Armor    | 73003  | 64   |
+| Bright Emperor's Pants    | 74003  | 64   |
+| Bright Emperor's Gauntlet | 76003  | 64   |
+| Bright Emperor's Boots    | 77003  | 64   |
+
+<Note>
+In the original PS_Game code, there was a limitation that overwrote Drop values greater than 6 with 0. This limitation has been removed in Episode 6 to support vanilla configuration.
+</Note>
+
+## Client Display
+
+When a player equips items from a set, the client displays synergy information in the item tooltip:
+
+### Example Bonus Display
+
+```
+Sinergia [5]
+- LUC +20
+- DEX +50
+- STR +70
+```
+
+The number in brackets `[5]` indicates how many items from the set are currently equipped. Bonuses scale based on the number of equipped items.
+
+## Code Modifications
+
+### Removed Drop Field Limitation
+
+The original `CGameData::LoadConstItem` function contained incompatible machine code that limited the `Drop` field:
+
+```asm
+// Original (Incompatible)
+004DB0DA  CMP WORD PTR SS:[ESP+70],6     // Drop
+004DB0E0  JBE SHORT ps_game.004DB0E6
+004DB0E2  MOV DWORD PTR SS:[ESP+70],EBX  // Overwrite with 0
+```
+
+This has been modified to remove the limitation:
+
+```asm
+// Modified (Compatible)
+004DB0DA  CMP WORD PTR SS:[ESP+70],6
+004DB0E0  JBE SHORT ps_game.004DB0E6
+004DB0E2  NOP
+004DB0E3  NOP
+004DB0E4  NOP
+004DB0E5  NOP
+```
+
+<Warning>
+The impact of this modification on other game systems is currently unknown. Monitor for potential side effects.
+</Warning>
+
+## Creating Item Sets
+
+<Steps>
+  <Step title="Define Set Items">
+    Identify which items will belong to your set. Typically, sets include:
+    - Helmet
+    - Upper Armor (Chest)
+    - Lower Armor (Pants)
+    - Gloves (Gauntlets)
+    - Boots
+    - Optional: Weapon, Shield
+  </Step>
+  
+  <Step title="Assign Set ID">
+    Choose an unused `Drop` value for your set. Update the Items table:
+    
+    ```sql
+    UPDATE Items SET [Drop] = 100 WHERE ItemID IN (72001, 73001, 74001, 76001, 77001)
+    ```
+  </Step>
+  
+  <Step title="Configure Bonuses">
+    Edit `SetItem.ini` to define the stat bonuses for each tier of your set:
+    - 2-piece bonus
+    - 3-piece bonus
+    - 4-piece bonus
+    - 5-piece bonus (or more)
+  </Step>
+  
+  <Step title="Encrypt and Deploy">
+    Encrypt `SetItem.SData` for client distribution and update both client and server data files.
+  </Step>
+</Steps>
+
+## Testing
+
+<Accordion title="SQL Query to Find Existing Sets">
+  ```sql
+  USE PS_GameDefs
+  
+  -- Find all unique set IDs
+  SELECT DISTINCT [Drop] as SetID, COUNT(*) as ItemCount
+  FROM Items
+  WHERE [Drop] > 0
+  GROUP BY [Drop]
+  ORDER BY [Drop]
+  
+  -- Find all items in a specific set
+  SELECT ItemName, ItemID, [Drop], Type, TypeID
+  FROM Items
+  WHERE [Drop] = 64  -- Replace with your set ID
+  ORDER BY Type, TypeID
+  ```
+</Accordion>
+
+## Limitations
+
+<Warning>
+- The client must have the encrypted `SetItem.SData` file
+- Server must have `SetItem.ini` in the correct directory
+- Items must have matching `Drop` values in the database
+- The removal of the Drop field limitation may have unknown side effects
+</Warning>
+
+## Best Practices
+
+1. **Use High Set IDs**: Use Drop values above 100 to avoid conflicts with existing sets
+2. **Document Your Sets**: Keep a reference table of which Drop ID corresponds to which set
+3. **Balance Bonuses**: Scale bonuses appropriately based on the number of items equipped
+4. **Test Thoroughly**: Verify bonuses apply correctly with different combinations of equipped items
+
+## Related Features
+
+- [Perfect Lapisian](/features/perfect-lapisian) - Enhance set items
+- [Item Ability Move](/features/item-ability-move) - Transfer enchantments between set items

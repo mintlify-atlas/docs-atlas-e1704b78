@@ -1,0 +1,285 @@
+---
+title: Rune Combination
+description: Rune and vial combination system for enhancing equipment
+---
+
+The Rune Combination feature allows players to combine vials and recreation runes to enhance or modify equipment. Recreation rune support is disabled by default due to security concerns.
+
+## Overview
+
+Rune Combination supports:
+- Vial combination for equipment enhancement
+- Recreation runes (optional, disabled by default)
+- Multiple rune types with different effects
+- Item effect-based system
+
+<Warning>
+The function that adds support for recreation runes is disabled by default because of Cheat Engine scripts. Enable only if you have proper anti-cheat measures in place.
+</Warning>
+
+## Recreation Rune Support
+
+### Enabling Recreation Runes
+
+Recreation rune support is controlled by a compile-time directive:
+
+```cpp title="sdev/src/packet_gem.cpp"
+// Disabled by default
+//#define SHAIYA_EP6_4_ENABLE_0806_HANDLER
+
+// To enable, uncomment:
+#define SHAIYA_EP6_4_ENABLE_0806_HANDLER
+```
+
+<Warning>
+Enabling recreation runes without anti-cheat protection may expose your server to Cheat Engine exploits. Only enable if you have implemented proper security measures.
+</Warning>
+
+<Steps>
+  <Step title="Assess Security">
+    Ensure you have anti-cheat systems in place to prevent Cheat Engine exploits.
+  </Step>
+
+  <Step title="Modify Source Code">
+    Uncomment the `SHAIYA_EP6_4_ENABLE_0806_HANDLER` definition in `packet_gem.cpp`.
+  </Step>
+
+  <Step title="Recompile">
+    Recompile the game service with the updated configuration.
+  </Step>
+
+  <Step title="Test">
+    Test recreation rune functionality in a controlled environment.
+  </Step>
+</Steps>
+
+## Supported Items
+
+### Vials
+
+Vials are consumable items used for equipment enhancement:
+
+| Item ID | Effect |
+|---------|--------|
+| 101007 | 93 |
+| 101008 | 94 |
+| 101009 | 95 |
+| 101010 | 96 |
+| 101011 | 97 |
+| 101012 | 98 |
+
+<Note>
+Vials are always enabled and do not require the recreation rune handler to be activated.
+</Note>
+
+### Recreation Runes
+
+<Warning>
+Recreation runes require `SHAIYA_EP6_4_ENABLE_0806_HANDLER` to be enabled.
+</Warning>
+
+| Item ID | Effect | Notes |
+|---------|--------|-------|
+| 100171 | 62 | Base recreation rune |
+| 101001 | 86 | Enhanced recreation rune |
+| 101002 | 87 | Enhanced recreation rune |
+| 101003 | 88 | Enhanced recreation rune |
+| 101004 | 89 | Enhanced recreation rune |
+| 101005 | 90 | Enhanced recreation rune |
+| 101006 | 91 | Enhanced recreation rune |
+
+## Item Effects
+
+### Vial Effects (93-98)
+
+<ParamField path="Effect 93" type="vial">
+  Item ID: 101007 - Basic enhancement vial
+</ParamField>
+
+<ParamField path="Effect 94" type="vial">
+  Item ID: 101008 - Intermediate enhancement vial
+</ParamField>
+
+<ParamField path="Effect 95" type="vial">
+  Item ID: 101009 - Advanced enhancement vial
+</ParamField>
+
+<ParamField path="Effect 96" type="vial">
+  Item ID: 101010 - Superior enhancement vial
+</ParamField>
+
+<ParamField path="Effect 97" type="vial">
+  Item ID: 101011 - Master enhancement vial
+</ParamField>
+
+<ParamField path="Effect 98" type="vial">
+  Item ID: 101012 - Legendary enhancement vial
+</ParamField>
+
+### Recreation Rune Effects (62, 86-91)
+
+<ParamField path="Effect 62" type="recreation rune">
+  Item ID: 100171 - Base recreation effect
+</ParamField>
+
+<ParamField path="Effect 86" type="recreation rune">
+  Item ID: 101001 - Enhanced recreation effect
+</ParamField>
+
+<ParamField path="Effect 87" type="recreation rune">
+  Item ID: 101002 - Enhanced recreation effect
+</ParamField>
+
+<ParamField path="Effect 88" type="recreation rune">
+  Item ID: 101003 - Enhanced recreation effect
+</ParamField>
+
+<ParamField path="Effect 89" type="recreation rune">
+  Item ID: 101004 - Enhanced recreation effect
+</ParamField>
+
+<ParamField path="Effect 90" type="recreation rune">
+  Item ID: 101005 - Enhanced recreation effect
+</ParamField>
+
+<ParamField path="Effect 91" type="recreation rune">
+  Item ID: 101006 - Enhanced recreation effect
+</ParamField>
+
+## Usage
+
+### Combining Vials
+
+<Steps>
+  <Step title="Obtain Vials">
+    Acquire the desired vials (Item IDs 101007-101012) through gameplay or the item mall.
+  </Step>
+
+  <Step title="Access Combination Interface">
+    Open the rune combination interface in the game client.
+  </Step>
+
+  <Step title="Select Vials">
+    Place the vials and target equipment in the combination window.
+  </Step>
+
+  <Step title="Combine">
+    Execute the combination to apply the vial effect to your equipment.
+  </Step>
+</Steps>
+
+### Combining Recreation Runes
+
+<Warning>
+Only available if recreation rune support is enabled in the source code.
+</Warning>
+
+<Steps>
+  <Step title="Enable Recreation Runes">
+    Ensure `SHAIYA_EP6_4_ENABLE_0806_HANDLER` is defined and the server is recompiled.
+  </Step>
+
+  <Step title="Obtain Recreation Runes">
+    Acquire recreation runes (Item IDs 100171, 101001-101006).
+  </Step>
+
+  <Step title="Use Recreation Runes">
+    Apply recreation runes through the combination interface to modify equipment properties.
+  </Step>
+</Steps>
+
+## Security Considerations
+
+### Cheat Engine Vulnerability
+
+Recreation runes are disabled by default due to known Cheat Engine exploits:
+- Memory manipulation can bypass combination requirements
+- Item duplication exploits may exist
+- Unauthorized equipment modification
+
+### Recommended Security Measures
+
+<Accordion title="Anti-Cheat Systems">
+  Implement server-side validation:
+  - Verify all combination requests server-side
+  - Validate item ownership before combination
+  - Check for impossible item states
+  - Log all combination attempts for auditing
+</Accordion>
+
+<Accordion title="Memory Protection">
+  Use anti-cheat tools that detect:
+  - Memory scanning
+  - Process injection
+  - Debugger attachment
+  - Known Cheat Engine signatures
+</Accordion>
+
+<Accordion title="Rate Limiting">
+  Implement rate limits on combination operations:
+  - Maximum combinations per time period
+  - Cooldowns between combinations
+  - Account-based limits
+</Accordion>
+
+## Configuration
+
+No configuration file is required for Rune Combination. The feature is controlled by:
+1. Source code compilation flags
+2. Item database configuration (item effects)
+3. Client support
+
+## Item Database Configuration
+
+Ensure items are properly configured in your item database:
+
+```sql title="Example Item Configuration"
+-- Vial configuration
+UPDATE Items SET ItemEffect = 93 WHERE ItemID = 101007;
+UPDATE Items SET ItemEffect = 94 WHERE ItemID = 101008;
+UPDATE Items SET ItemEffect = 95 WHERE ItemID = 101009;
+UPDATE Items SET ItemEffect = 96 WHERE ItemID = 101010;
+UPDATE Items SET ItemEffect = 97 WHERE ItemID = 101011;
+UPDATE Items SET ItemEffect = 98 WHERE ItemID = 101012;
+
+-- Recreation rune configuration (if enabled)
+UPDATE Items SET ItemEffect = 62 WHERE ItemID = 100171;
+UPDATE Items SET ItemEffect = 86 WHERE ItemID = 101001;
+UPDATE Items SET ItemEffect = 87 WHERE ItemID = 101002;
+UPDATE Items SET ItemEffect = 88 WHERE ItemID = 101003;
+UPDATE Items SET ItemEffect = 89 WHERE ItemID = 101004;
+UPDATE Items SET ItemEffect = 90 WHERE ItemID = 101005;
+UPDATE Items SET ItemEffect = 91 WHERE ItemID = 101006;
+```
+
+## Troubleshooting
+
+<Accordion title="Recreation runes not working">
+  Check if recreation rune support is enabled:
+  1. Open `sdev/src/packet_gem.cpp`
+  2. Verify `SHAIYA_EP6_4_ENABLE_0806_HANDLER` is defined (uncommented)
+  3. Recompile the game service
+  4. Restart the server
+</Accordion>
+
+<Accordion title="Vials not combining">
+  Verify:
+  - Items have correct effect values in the database
+  - Client supports vial combination
+  - Target equipment is compatible with the vial type
+  - Player has required materials
+</Accordion>
+
+<Accordion title="Compilation errors after enabling recreation runes">
+  Ensure:
+  - Using C++20 compiler
+  - All dependencies are properly linked
+  - No syntax errors in the packet handler
+  - Visual Studio 2019 or later is being used
+</Accordion>
+
+## Related Features
+
+- **Chaotic Squares**: Another combination system for equipment enhancement
+- **Item Ability Move**: Transfer equipment abilities between items
+- **Lapisian Combination**: Lapisian enhancement system

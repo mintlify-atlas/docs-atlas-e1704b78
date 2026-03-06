@@ -1,0 +1,134 @@
+---
+title: Item Repair
+description: Equipment durability repair system with dynamic cost calculation
+---
+
+The Item Repair feature calculates repair costs based on item value and damage percentage. The implementation differs between EP5 and EP6.4, with EP6.4 offering higher repair costs.
+
+## Overview
+
+Item Repair allows players to restore equipment durability at NPCs. The cost is dynamically calculated based on:
+- Item base purchase price
+- Current damage amount
+- Episode version (EP5 vs EP6.4)
+
+<Warning>
+The client endurance will not match the server endurance in real-time. Please relog to see the correct repair cost(s).
+</Warning>
+
+## Repair Cost Formulas
+
+The repair cost calculation varies depending on the episode version.
+
+### Episode 5 Formula
+
+```cpp title="EP5 Repair Cost Calculation"
+RepairCost = (Item.Buy / 30.0) * (Damage / 400.0)
+```
+
+<ParamField path="Item.Buy" type="number">
+  The base purchase price of the item from the item database
+</ParamField>
+
+<ParamField path="Damage" type="number">
+  The current damage value of the item (lost durability)
+</ParamField>
+
+### Episode 6.4 Formula
+
+```cpp title="EP6.4 Repair Cost Calculation"
+RepairCost = (Item.Buy / 15.0) * (Damage / 400.0)
+```
+
+<Note>
+EP6.4 repair costs are twice as expensive as EP5 due to the divisor changing from 30.0 to 15.0.
+</Note>
+
+## Calculation Examples
+
+### Example 1: EP5 Repair Cost
+
+| Parameter | Value |
+|-----------|-------|
+| Item.Buy | 120,000 |
+| Damage | 200 |
+| Formula | (120,000 / 30.0) * (200 / 400.0) |
+| Result | 2,000 gold |
+
+### Example 2: EP6.4 Repair Cost
+
+| Parameter | Value |
+|-----------|-------|
+| Item.Buy | 120,000 |
+| Damage | 200 |
+| Formula | (120,000 / 15.0) * (200 / 400.0) |
+| Result | 4,000 gold |
+
+## Client Synchronization
+
+<Steps>
+  <Step title="Repair Item at NPC">
+    Interact with a repair NPC and select the items to repair.
+  </Step>
+
+  <Step title="Pay Repair Cost">
+    The server calculates and deducts the repair cost from your gold.
+  </Step>
+
+  <Step title="Relog for Accurate Display">
+    The client's endurance display may not update immediately. Relog to see the correct repair costs for subsequent repairs.
+  </Step>
+</Steps>
+
+## Technical Details
+
+### Damage Calculation
+
+Damage represents the loss of durability:
+```
+Damage = MaxDurability - CurrentDurability
+```
+
+### Cost Scaling
+
+The repair cost scales linearly with:
+- **Item value**: More expensive items cost more to repair
+- **Damage amount**: Greater damage results in higher repair costs
+
+### Formula Breakdown
+
+<Accordion title="Why divide by 30.0 or 15.0?">
+  These divisors control the overall repair cost scaling. A smaller divisor (15.0 in EP6.4) results in higher repair costs, making equipment maintenance more expensive and serving as a gold sink.
+</Accordion>
+
+<Accordion title="Why divide damage by 400.0?">
+  This normalizes the damage value to a percentage-like scale, ensuring repair costs remain proportional regardless of the maximum durability value.
+</Accordion>
+
+## Comparison Table
+
+| Aspect | EP5 | EP6.4 |
+|--------|-----|-------|
+| Divisor | 30.0 | 15.0 |
+| Relative Cost | 1x | 2x |
+| Economy Impact | Lower | Higher |
+| Gold Sink | Moderate | Strong |
+
+## Known Limitations
+
+1. **Client Display Desync**: The client endurance display doesn't update in real-time
+2. **Relog Required**: Players must relog to see accurate repair costs
+3. **No Client Prediction**: The client cannot accurately predict repair costs before talking to an NPC
+
+## Configuration
+
+The repair formula is hardcoded in the game service. To change between EP5 and EP6.4:
+
+1. Recompile the game service with the desired formula
+2. The formula is located in the item repair handler
+3. No configuration file changes are needed
+
+## Related Features
+
+- **Item Effects**: Safety charms and item protection items
+- **Economy**: Repair costs serve as a gold sink mechanism

@@ -1,0 +1,247 @@
+---
+title: "Lapisian Remake"
+description: "Combine multiple lapisians to create more powerful enchantment gems"
+---
+
+## Overview
+
+The Lapisian Remake system allows players to combine multiple lapisians of the same type to create higher-tier lapisians with better stat bonuses. This feature is essential for creating powerful equipment enchantments.
+
+<Note>
+The number of lapisians required for combination is determined by the `ReqLuc` value in the item configuration.
+</Note>
+
+## Activation Item
+
+Use the following item to activate the Lapisian Remake window:
+
+| ItemID | Description |
+|--------|-------------|
+| 101101 | Lapisian Combination Scroll |
+
+## How It Works
+
+<Steps>
+  <Step title="Acquire Combination Scroll">
+    Obtain Item 101101 (Lapisian Combination Scroll) from the item mall or in-game sources.
+  </Step>
+  
+  <Step title="Open Remake Window">
+    Use the scroll to open the Lapisian Remake interface.
+  </Step>
+  
+  <Step title="Select Lapisians">
+    Place the required number of lapisians of the same type into the combination slots. The `ReqLuc` value determines how many are needed.
+  </Step>
+  
+  <Step title="Confirm Combination">
+    Click confirm to combine the lapisians. The system will consume all input lapisians and create a new higher-tier lapisian.
+  </Step>
+</Steps>
+
+## Configuration
+
+### ReqLuc Value
+
+The `ReqLuc` field in the Items table determines the number of lapisians required for combination:
+
+```sql
+SELECT ItemID, ItemName, ReqLuc 
+FROM Items 
+WHERE Type = 30  -- Lapisians
+AND ReqLuc > 0
+ORDER BY ReqLuc
+```
+
+<ParamField path="ReqLuc" type="integer" required>
+  The number of lapisians required for combination.
+  
+  - **2**: Combine 2 lapisians
+  - **3**: Combine 3 lapisians
+  - **5**: Combine 5 lapisians
+  - **10**: Combine 10 lapisians
+  
+  Higher requirements typically indicate more powerful output lapisians.
+</ParamField>
+
+## System Message
+
+The Lapisian Remake system uses the following system message:
+
+```
+510  "Lapisian combination information message"
+```
+
+This message displays when:
+- The remake window is opened
+- A combination is attempted
+- Combination succeeds or fails
+- Invalid lapisians are selected
+
+## Combination Rules
+
+<Warning>
+The client does not allow more than one lapisian from the same stack. You must have separate lapisian items, not a stack of multiple lapisians.
+</Warning>
+
+### Valid Combinations
+
+- ✅ All lapisians must be the same ItemID
+- ✅ All lapisians must be the same type and grade
+- ✅ Each lapisian must be from a different inventory slot (no stacking)
+- ✅ Must have exactly the number specified by ReqLuc
+
+### Invalid Combinations
+
+- ❌ Mixing different lapisian types
+- ❌ Using lapisians from the same stack
+- ❌ Using fewer lapisians than required
+- ❌ Using more lapisians than required
+
+## Example Lapisian Tiers
+
+<Accordion title="Strength Lapisian Progression">
+  Here's an example of how lapisians might progress through combination:
+  
+  | Tier | Item Name | ItemID | STR Bonus | ReqLuc | Creates |
+  |------|-----------|--------|-----------|--------|----------|
+  | 1    | Basic STR Lapisian | 100001 | +5 STR | 0 | - |
+  | 2    | STR Lapisian | 100002 | +10 STR | 2 | Requires 2x Tier 1 |
+  | 3    | Greater STR Lapisian | 100003 | +20 STR | 3 | Requires 3x Tier 2 |
+  | 4    | Superior STR Lapisian | 100004 | +40 STR | 5 | Requires 5x Tier 3 |
+  | 5    | Perfect STR Lapisian | 100005 | +80 STR | 10 | Requires 10x Tier 4 |
+  
+  <Note>
+  These are example values. Actual stat bonuses and requirements are defined in your Items database.
+  </Note>
+</Accordion>
+
+## Database Configuration
+
+### Example SQL for Combination Chain
+
+```sql
+-- Tier 1: Basic Lapisian (cannot be created, only drops)
+INSERT INTO Items (ItemID, ItemName, Type, TypeID, ReqLuc)
+VALUES (100001, 'Basic STR Lapisian', 30, 1, 0)
+
+-- Tier 2: Requires 2x Tier 1
+INSERT INTO Items (ItemID, ItemName, Type, TypeID, ReqLuc)
+VALUES (100002, 'STR Lapisian', 30, 1, 2)
+
+-- Tier 3: Requires 3x Tier 2
+INSERT INTO Items (ItemID, ItemName, Type, TypeID, ReqLuc)
+VALUES (100003, 'Greater STR Lapisian', 30, 1, 3)
+
+-- Tier 4: Requires 5x Tier 3
+INSERT INTO Items (ItemID, ItemName, Type, TypeID, ReqLuc)
+VALUES (100004, 'Superior STR Lapisian', 30, 1, 5)
+
+-- Tier 5: Requires 10x Tier 4
+INSERT INTO Items (ItemID, ItemName, Type, TypeID, ReqLuc)
+VALUES (100005, 'Perfect STR Lapisian', 30, 1, 10)
+```
+
+## Success Rates
+
+The Lapisian Remake system typically has a 100% success rate when:
+- All input lapisians are valid
+- The correct number of lapisians is provided
+- All lapisians are of the same type
+
+<Note>
+Some server configurations may implement failure rates for lapisian combination. Check your server's specific configuration for success rate details.
+</Note>
+
+## Cost Calculation
+
+The total cost to create a high-tier lapisian can be significant:
+
+```
+Example: Creating 1x Perfect STR Lapisian (Tier 5)
+
+Tier 4 → Tier 5: 10x Tier 4 lapisians
+Tier 3 → Tier 4: 5x Tier 3 per Tier 4 = 50x Tier 3 lapisians  
+Tier 2 → Tier 3: 3x Tier 2 per Tier 3 = 150x Tier 2 lapisians
+Tier 1 → Tier 2: 2x Tier 1 per Tier 2 = 300x Tier 1 lapisians
+
+Total: 300 Basic Lapisians → 1 Perfect Lapisian
+```
+
+<Warning>
+Always calculate the total cost before committing to creating high-tier lapisians. The resource requirements increase exponentially.
+</Warning>
+
+## Best Practices
+
+1. **Plan Ahead**: Calculate how many base lapisians you need before starting
+2. **Organize Inventory**: Keep lapisians organized by tier to avoid confusion
+3. **Batch Processing**: Combine multiple lapisians in sequence to save time
+4. **Verify Types**: Double-check all lapisians are the same type before combining
+5. **Storage**: Use warehouse space to store intermediate tier lapisians
+
+## Troubleshooting
+
+<Accordion title="Combination Window Won't Open">
+  - Verify you have Item 101101 in your inventory
+  - Check that you're not in combat or a restricted zone
+  - Ensure your client version supports this feature
+  - Try relogging and attempting again
+</Accordion>
+
+<Accordion title="Cannot Add Lapisian to Combination Slot">
+  Common causes:
+  - Using lapisians from the same stack (they must be separate items)
+  - Mixing different lapisian types (all must be identical)
+  - Inventory slots locked or in use
+  - Lapisians are currently socketed in equipment
+  
+  Solution: Ensure each lapisian is in its own inventory slot and not equipped.
+</Accordion>
+
+<Accordion title="Combination Button Is Disabled">
+  - Verify you have exactly the number of lapisians required (check ReqLuc)
+  - Ensure all lapisians are the same ItemID
+  - Check that none of the lapisians are bound or restricted
+  - Verify you have Item 101101 (combination scroll) in inventory
+</Accordion>
+
+<Accordion title="ReqLuc Value in Database">
+  To check the ReqLuc requirement for a specific lapisian:
+  
+  ```sql
+  SELECT ItemID, ItemName, ReqLuc 
+  FROM Items 
+  WHERE ItemID = YOUR_LAPISIAN_ID
+  ```
+  
+  If ReqLuc = 0, this lapisian cannot be created through combination (it's a base tier or special item).
+</Accordion>
+
+## Integration with Other Systems
+
+### Alchemy System
+
+The Lapisian Remake system is related to the Alchemy system (not yet implemented):
+
+<Note>
+The Alchemy system requires NPCs with merchant type 20 (Alchemist). NpcType 1 with NpcTypeID 310 is used for alchemist NPCs.
+</Note>
+
+#### Materials for Advanced Combinations
+
+Some lapisian combinations require special materials:
+
+| ItemID | ItemName       | ItemEffect | Usage |
+|--------|----------------|------------|-------|
+| 100248 | Crowley Liquid | 92         | Required for lapisian combination |
+
+<Warning>
+The Alchemy-based lapisian combination system is not fully implemented in Episode 6. The current Lapisian Remake system (Item 101101) is the functional implementation.
+</Warning>
+
+## Related Features
+
+- [Perfect Lapisian](/features/perfect-lapisian) - Create perfect lapisians with guaranteed success
+- [Item Ability Move](/features/item-ability-move) - Transfer lapisians between equipment
+- Alchemy System - Advanced crafting system (not yet implemented)

@@ -1,0 +1,150 @@
+---
+title: "util"
+description: "Memory utilities for Shaiya Episode 6 development"
+---
+
+The `util` library provides essential memory manipulation utilities used throughout the Shaiya Episode 6 project. This is a foundational library that other projects depend on for low-level memory operations.
+
+## Environment Requirements
+
+- **OS**: Windows 10
+- **IDE**: Visual Studio 2019
+- **Language**: C++ 20
+
+## Prerequisites
+
+- [Microsoft Visual C++ Redistributable](https://aka.ms/vs/17/release/vc_redist.x86.exe)
+
+## Overview
+
+<Note>
+The `util` library is a core dependency for all other Episode 6 projects. It provides memory manipulation utilities essential for client and server modifications.
+</Note>
+
+The library contains utilities for:
+
+- Memory reading and writing
+- Memory pattern scanning
+- Process memory operations
+- Address calculations
+- Memory protection management
+
+## Use Cases
+
+### Client Modifications
+
+```cpp
+// Reading values from game memory
+auto value = Memory::Read<int>(address);
+
+// Writing values to game memory
+Memory::Write<int>(address, newValue);
+```
+
+### Memory Patching
+
+```cpp
+// Patching game code at runtime
+Memory::Patch(address, bytes, length);
+
+// Protecting/unprotecting memory regions
+Memory::Protect(address, length, protection);
+```
+
+### Pattern Scanning
+
+<Accordion title="Pattern Scanning Example">
+```cpp
+// Finding specific byte patterns in memory
+auto address = Memory::FindPattern("48 89 5C 24 ?? 57");
+
+if (address)
+{
+    // Pattern found, apply modifications
+    Memory::Write<byte>(address, 0x90); // NOP instruction
+}
+```
+</Accordion>
+
+## Memory Safety
+
+<Warning>
+Always verify memory addresses before reading or writing. Invalid memory access can cause crashes.
+</Warning>
+
+```cpp
+// Check if address is valid before accessing
+if (Memory::IsValidAddress(address))
+{
+    auto value = Memory::Read<int>(address);
+}
+```
+
+## Integration
+
+The `util` library is used by:
+
+- **sdev-client** - For client memory modifications
+- **sdev** - For server-side memory operations
+- **sdev-map** - For map server memory management
+- **sdev-db** - For database memory operations
+
+### Including the Library
+
+```cpp
+#include <util/memory.h>
+#include <util/pattern.h>
+```
+
+### Build Configuration
+
+Ensure the `util` library is built first in your project dependencies:
+
+1. Build `util` library
+2. Link against `util.lib` in dependent projects
+3. Include the appropriate header files
+
+## Best Practices
+
+<Note>
+When working with memory utilities:
+- Always validate addresses before use
+- Use RAII patterns for memory protection changes
+- Test thoroughly in development environments
+- Document memory addresses and their purposes
+</Note>
+
+### Example: Safe Memory Operation
+
+```cpp
+class MemoryProtection
+{
+public:
+    MemoryProtection(void* address, size_t size, DWORD protection)
+        : m_address(address), m_size(size)
+    {
+        VirtualProtect(address, size, protection, &m_oldProtection);
+    }
+
+    ~MemoryProtection()
+    {
+        VirtualProtect(m_address, m_size, m_oldProtection, &m_oldProtection);
+    }
+
+private:
+    void* m_address;
+    size_t m_size;
+    DWORD m_oldProtection;
+};
+
+// Usage
+{
+    MemoryProtection protect(address, size, PAGE_EXECUTE_READWRITE);
+    Memory::Write<int>(address, value);
+    // Protection automatically restored on scope exit
+}
+```
+
+## Dependencies
+
+The `util` library has minimal external dependencies and serves as a foundation for other Episode 6 libraries.

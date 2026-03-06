@@ -1,0 +1,230 @@
+---
+title: Installation
+description: Step-by-step guide to building and installing Shaiya Episode 6 libraries
+---
+
+This guide covers building the Shaiya Episode 6 libraries and integrating them with your server.
+
+## Building the Project
+
+<Steps>
+  <Step title="Open the solution">
+    Open the solution file in Visual Studio 2019. The project is configured to use C++20 and target x86 (32-bit) architecture.
+  </Step>
+  
+  <Step title="Select build configuration">
+    Choose your desired build configuration (Debug or Release) and ensure the platform is set to **x86**.
+  </Step>
+  
+  <Step title="Build the solution">
+    Build the solution using Visual Studio. The following libraries will be compiled:
+    - `sdev.dll` - Game service library
+    - `sdev-client.dll` - Client modifications library
+    - `sdev-db.dll` - Database agent library
+    - `sdev-login.dll` - Login service library
+  </Step>
+</Steps>
+
+<Note>
+  Ensure you have the [Microsoft Visual C++ Redistributable](https://aka.ms/vs/17/release/vc_redist.x86.exe) installed before running the compiled binaries.
+</Note>
+
+## Library Injection Methods
+
+There are two primary methods for injecting the libraries into the game executables:
+
+### Method 1: Cheat Engine Injection
+
+Cheat Engine provides a straightforward way to inject DLLs into running processes.
+
+<Steps>
+  <Step title="Install Cheat Engine 7.3">
+    Download and install Cheat Engine 7.3 (recommended version for compatibility)
+  </Step>
+  
+  <Step title="Launch the game process">
+    Start the game service, client, or other executable you want to inject the library into
+  </Step>
+  
+  <Step title="Attach Cheat Engine">
+    Open Cheat Engine and attach it to the target process
+  </Step>
+  
+  <Step title="Inject the DLL">
+    Use Cheat Engine's DLL injection feature to inject the appropriate library
+  </Step>
+</Steps>
+
+<Warning>
+  Cheat Engine injection is not guaranteed to work for everyone. Users have reported issues with versions newer than 7.3.
+</Warning>
+
+### Method 2: Import Table Modification
+
+This method modifies the executable's import table to load the library automatically.
+
+<Steps>
+  <Step title="Install PE Bear">
+    Download and install [PE Bear](https://github.com/hasherezade/pe-bear) for import table editing
+  </Step>
+  
+  <Step title="Open the executable">
+    Open the target executable (ps_game.exe, game.exe, etc.) in PE Bear
+  </Step>
+  
+  <Step title="Add new import">
+    Navigate to the Imports section and add a new import entry for the library. The libraries have exports defined in their main headers specifically for this purpose.
+  </Step>
+  
+  <Step title="Save the modified executable">
+    Save the modified executable. The library will now load automatically when the process starts.
+  </Step>
+</Steps>
+
+<Note>
+  The import table method is more reliable than Cheat Engine injection and is the recommended approach for production environments.
+</Note>
+
+## Configuration Files
+
+### Game Service Configuration
+
+The game service library (`sdev`) requires configuration files in specific locations.
+
+<CodeGroup>
+
+```plaintext PSM_Client/Bin/Data Directory
+PSM_Client/Bin/Data/
+├── BattleFieldMoveInfo.ini
+├── OnlineTimePrize.ini
+├── ChaoticSquare.ini
+├── SetItem.ini
+└── Map.ini
+```
+
+</CodeGroup>
+
+Configuration files are available in the repository at:
+- [sdev/bin/data/](https://github.com/kurtekat/shaiya-episode-6/tree/main/sdev/bin/data/)
+
+<Warning>
+  **File Operations**: If you inject libraries using the imports method, ensure the current working directory is set correctly. The library uses `GetModuleFileNameW` to resolve paths, which may cause issues if the working directory is not properly initialized.
+</Warning>
+
+### Client Configuration
+
+The client library (`sdev-client`) requires additional data files:
+
+<Steps>
+  <Step title="Add BattleFieldMoveInfo_Client">
+    Add `BattleFieldMoveInfo_Client` to the game data root directory
+  </Step>
+  
+  <Step title="Add interface graphics">
+    Add the following files to the interface directory:
+    - `main_stats_pvp.tga`
+    - `main_stats_pvp_button.tga`
+  </Step>
+</Steps>
+
+Configuration files are available at:
+- [sdev-client/bin/data/](https://github.com/kurtekat/shaiya-episode-6/tree/main/sdev-client/bin/data)
+
+<Note>
+  The client library is specifically designed for Shaiya PT client patch 182. Other client versions may not be compatible.
+</Note>
+
+## Database Setup
+
+### Installing Stored Procedures
+
+The database library requires specific stored procedures to be installed.
+
+<Steps>
+  <Step title="Locate SQL scripts">
+    Navigate to the [sdev-db/bin/sql](https://github.com/kurtekat/shaiya-episode-6/tree/main/sdev-db/bin/sql) directory
+  </Step>
+  
+  <Step title="Execute Item Mall procedures">
+    Install the following stored procedures for Item Mall functionality:
+    ```sql
+    [dbo].[usp_Read_User_CashPoint_UsersMaster]
+    [dbo].[usp_Save_User_BuyPointItems2]
+    [dbo].[usp_Save_User_GiftPointItems2]
+    [dbo].[usp_Update_UserPoint]
+    ```
+  </Step>
+  
+  <Step title="Handle existing procedures">
+    If you receive an error about procedures already existing, change `ALTER` to `CREATE` in the SQL scripts and try again.
+  </Step>
+</Steps>
+
+<Warning>
+  The database binary (`ps_dbAgent.exe`) has been patched to fix an item mall purchase duplication bug. Ensure you use the patched version from the repository.
+</Warning>
+
+## Common Issues
+
+### Data Execution Prevention (DEP)
+
+Intermittent access violations have been reported on Windows Server 2022 related to Data Execution Prevention.
+
+<Steps>
+  <Step title="Check DEP policy">
+    Run the following command to check your DEP support policy:
+    ```cmd
+    wmic OS Get DataExecutionPrevention_SupportPolicy
+    ```
+  </Step>
+  
+  <Step title="Configure DEP if needed">
+    If you encounter access violations, you may need to configure DEP settings for the game executables. See [Microsoft's DEP documentation](https://learn.microsoft.com/en-us/windows/win32/memory/data-execution-prevention) for details.
+  </Step>
+</Steps>
+
+### File Operations
+
+<Warning>
+  **Important**: Some users have reported file operation issues when importing libraries instead of injecting them. This is caused by `std::filesystem::current_path` being called before the current working directory is resolved, resulting in paths pointing to `C:\\WINDOWS\\system32` instead of the game directory.
+  
+  The library uses `GetModuleFileNameW` with `INT16_MAX` (32767) as the buffer size to work around the `MAX_PATH` limitation and resolve paths correctly.
+</Warning>
+
+### False Positives
+
+Antivirus software may flag the compiled libraries as malicious.
+
+<Note>
+  The files in this repository are submitted to antivirus companies for analysis when false positives are detected. If your antivirus flags the files, you can submit them directly to antivirus vendors using VirusTotal's [false positive contacts](https://docs.virustotal.com/docs/false-positive-contacts).
+</Note>
+
+## Verification
+
+After installation, verify that the libraries are working correctly:
+
+<Steps>
+  <Step title="Check library loading">
+    Start the game service/client and check that the library loads without errors
+  </Step>
+  
+  <Step title="Test basic functionality">
+    Test basic features like Item Mall, battlefield moves, or other implemented features
+  </Step>
+  
+  <Step title="Review logs">
+    Check log files for any errors or warnings related to library initialization
+  </Step>
+</Steps>
+
+## Next Steps
+
+Once installation is complete, explore the available features:
+- Item Mall functionality
+- Battlefield move system
+- Reward item system
+- Chaotic Squares crafting
+- Synergy (set items)
+- And more...
+
+Refer to the Features documentation for detailed information about each feature and its configuration.

@@ -1,0 +1,213 @@
+---
+title: Configuration Files
+description: Server configuration reference for Episode 6 INI files
+---
+
+This page documents the configuration files used by the Episode 6 game service. All configuration files are expected to be in the `PSM_Client/Bin/Data` directory.
+
+## BattleFieldMoveInfo.ini
+
+Configures instant battlefield zone movement. The move will be instant, like the official server. Certain debuffs will prevent movement. Moving to the same zone is not allowed.
+
+<ParamField path="MAP_NO" type="integer" required>
+  Unique map identifier for each battlefield zone. Each `MAP_NO` key must have a unique value.
+</ParamField>
+
+<ParamField path="Level Range" type="string" required>
+  The level range allowed for the battlefield. Must be unique across all battlefield zones.
+</ParamField>
+
+### Supported Clients
+
+| Locale | Patch | Supported |
+|--------|-------|----------|
+| ES     | 171   | ❌       |
+| PT     | 182   | ❌       |
+| PT     | 189   | ❌       |
+
+---
+
+## OnlineTimePrize.ini
+
+Configures the keep-alive reward system. Progress is account-wide. The progress of the current item will reset if a character leaves the game world.
+
+<Note>
+  The client expects to receive exactly 20 item units.
+</Note>
+
+<ParamField path="Minutes" type="integer" required>
+  Time in minutes required to receive the reward item.
+</ParamField>
+
+<ParamField path="ItemID" type="integer" required>
+  The ID of the item to award.
+</ParamField>
+
+### Timeout Calculation
+
+The client adds 15000 ticks to the timeout:
+
+```cpp
+auto minutes = rewardItem[index].minutes;
+auto timeout = GetTickCount() + ((minutes * 60000) + 15000);
+```
+
+### System Messages
+
+```
+2044    "The keep-alive event has ended."
+7188    "Could not receive your reward because you do not have space in your inventory."
+7189    "Bronze medal received"
+7190    "Silver medal received"
+7191    "Gold medal received"
+7192    "Recurring player item received"
+```
+
+### Supported Clients
+
+| Locale | Patch | Supported |
+|--------|-------|----------|
+| ES     | 171   | ❌       |
+| PT     | 182   | ✅       |
+| PT     | 189   | ✅       |
+
+---
+
+## ChaoticSquare.ini
+
+Configures chaotic square (item synthesis) mechanics including fortune money and crafting hammers.
+
+### Fortune Money
+
+<ParamField path="FortuneMoney" type="integer" default="100000000">
+  Gold amount that increases success chance. The value should be nonzero and evenly divisible by 100. The chance of success will be increased by 1 percent per the whole value given (can be fractional) and will be limited to 5 percent.
+</ParamField>
+
+### Crafting Hammers
+
+The `ReqVg` value is the added chance of success. The library will multiply the value by 100.
+
+| ItemID | Effect | ReqVg | Added Success Chance |
+|--------|--------|-------|---------------------|
+| 102074 | 102    | 5     | 5%                  |
+| 102075 | 102    | 10    | 10%                 |
+
+<Warning>
+  Free Combination feature will not be implemented.
+</Warning>
+
+---
+
+## SetItem.ini
+
+Configures item synergy bonuses (set items). The client expects `SetItem.SData` to be encrypted.
+
+### Server Configuration
+
+The `Drop` field in the Items table is the ID of the item set:
+
+```sql
+USE PS_GameDefs
+SELECT ItemName, ItemID, [Drop] FROM Items WHERE [Drop]=64
+```
+
+**Example Output:**
+
+| ItemName                  | ItemID | Drop |
+|---------------------------|--------|------|
+| Bright Emperor's Helmet   | 72003  | 64   |
+| Bright Emperor's Armor    | 73003  | 64   |
+| Bright Emperor's Pants    | 74003  | 64   |
+| Bright Emperor's Gauntlet | 76003  | 64   |
+| Bright Emperor's Boots    | 77003  | 64   |
+
+### Client Display
+
+Bonus descriptions appear in the following format:
+
+```
+" Sinergia [5]\n- LUC +20\n- DEX +50\n- STR +70"
+```
+
+### Machine Code Modification
+
+Original code limited `Drop` values to 6 or less. The instruction at `004DB0E2` has been removed to support vanilla configuration:
+
+```
+004DB0DA  CMP WORD PTR SS:[ESP+70],6
+004DB0E0  JBE SHORT ps_game.004DB0E6
+004DB0E2  NOP
+004DB0E3  NOP
+004DB0E4  NOP
+004DB0E5  NOP
+```
+
+<Warning>
+  It is unknown if this change causes issues elsewhere in the code.
+</Warning>
+
+---
+
+## Map.ini
+
+Configures map properties including weather, map type, and town scroll functionality.
+
+### Map Configuration
+
+<ParamField path="MapType" type="string" required>
+  The type of map. Values include `F` (Field), etc.
+</ParamField>
+
+<ParamField path="WeatherState" type="integer" default="0">
+  Initial weather state for the map.
+</ParamField>
+
+<ParamField path="WeatherRate" type="integer" default="10">
+  Weather change rate.
+</ParamField>
+
+<ParamField path="WeatherPower" type="integer" default="1">
+  Weather effect intensity.
+</ParamField>
+
+<ParamField path="WeatherDelay" type="integer" default="10">
+  Delay between weather changes.
+</ParamField>
+
+<ParamField path="WeatherNoneDelay" type="integer" default="60">
+  Delay when no weather is active.
+</ParamField>
+
+<ParamField path="TownMoveScroll" type="integer" default="1">
+  Enables (1) or disables (0) town move scroll functionality for this zone.
+</ParamField>
+
+### Example Configuration
+
+```ini
+[SET_ZONE_0]
+MapType          = F
+WeatherState     = 0
+WeatherRate      = 10
+WeatherPower     = 1
+WeatherDelay     = 10
+WeatherNoneDelay = 60
+TownMoveScroll   = 0
+```
+
+### Town Move Scrolls
+
+The library reads `TownMoveScroll` keys from `Map.ini` to determine whether town scroll movement is enabled. The move will be instant, like the official server. Certain debuffs will prevent movement.
+
+The library uses NPC data to determine teleport locations. The item `ReqVg` value is the NPC identifier.
+
+| ItemID | Effect | ReqVg | NPC ID |
+|--------|--------|-------|--------|
+| 101102 | 104    | 111   | 111    |
+| 101103 | 104    | 112   | 112    |
+| 101104 | 104    | 101   | 101    |
+| 101105 | 104    | 102   | 102    |
+| 101106 | 104    | 103   | 103    |
+| 101107 | 104    | 104   | 104    |
+| 101108 | 104    | 105   | 105    |
+| 101109 | 104    | 106   | 106    |

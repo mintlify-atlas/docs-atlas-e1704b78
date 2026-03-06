@@ -1,0 +1,295 @@
+---
+title: "Skill Abilities"
+description: "Episode 6 skill ability support for experience multipliers, stat buffs, and special effects"
+---
+
+## Overview
+
+The Episode 6 skill abilities system adds support for specific skill abilities that were not present in earlier episodes. The library implements support for abilities 70, 87, and 35 (experience stones).
+
+<Warning>
+This implementation **only affects Episode 6 skill abilities**. It does not modify or affect other existing skills.
+</Warning>
+
+## Supported Skills
+
+The following skills are supported by the Episode 6 library:
+
+| SkillID | Ability | Supported | Description |
+|---------|---------|-----------|-------------|
+| 222 | 35 | ✅ | EXP Stone (150%) |
+| 223 | 35 | ✅ | EXP Stone (150%) |
+| 272 | 35 | ✅ | EXP Stone |
+| 375 | 52 | ❌ | Not implemented |
+| 376 | 53 | ❌ | Not implemented |
+| 377 | 54 | ❌ | Not implemented |
+| 378 | 55 | ❌ | Not implemented |
+| 379 | 56 | ❌ | Not implemented |
+| 380 | 57 | ❌ | Not implemented |
+| 398 | 70 | ✅ | Stat buff effect |
+| 399 | 70 | ✅ | Stat buff effect |
+| 400 | 70 | ✅ | Stat buff effect |
+| 401 | 70 | ✅ | Stat buff effect |
+| 396 | 73 | ❌ | Not implemented |
+| 397 | 74 | ❌ | Not implemented |
+| 412 | 78 | ❌ | Not implemented |
+| 426 | 35 | ✅ | EXP Stone (500%) |
+| 427 | 35 | ✅ | EXP Stone (500%) |
+| 432 | 87 | ✅ | EXP multiplier |
+| 434 | 35 | ✅ | EXP Stone (200%) |
+
+## Skill Ability 35: Experience Stones
+
+### Overview
+
+Ability 35 provides experience multipliers when killing monsters. The library modifies `CUser::AddExpFromUser` to support Episode 6.4 skill ability values.
+
+### Original Implementation
+
+The original code multiplies EXP depending on two `CUser` variables:
+
+```cpp
+// 00574080 (2.0)
+bool32_t multiplyExp2;  //0x596C
+
+// 00574090 (1.5)
+bool32_t multiplyExp1;  //0x5970 (not used)
+```
+
+### Item and Skill Configuration
+
+| ItemID | SkillID | SkillLv | AbilityValue | EXP Multiplier |
+|--------|---------|---------|--------------|----------------|
+| 100042 | 222     | 1       | 150          | 1.5x (150%)    |
+| 100043 | 223     | 1       | 150          | 1.5x (150%)    |
+| 101114 | 426     | 2       | 500          | 5.0x (500%)    |
+| 101115 | 426     | 3       | 1000         | 10.0x (1000%)  |
+| 101117 | 427     | 2       | 500          | 5.0x (500%)    |
+| 101121 | 434     | 2       | 200          | 2.0x (200%)    |
+| 101122 | 434     | 3       | 200          | 2.0x (200%)    |
+
+<Note>
+The ability value is expected to be greater than 100. The library divides the ability value by 100 to get the actual multiplier.
+</Note>
+
+### Calculation Formula
+
+```cpp
+// AbilityValue from skill data
+int abilityValue = skill.AbilityValue;  // e.g., 150, 500, 1000
+
+// Convert to multiplier (must be > 100)
+if (abilityValue > 100)
+{
+    float multiplier = abilityValue / 100.0f;
+    exp = exp * multiplier;
+}
+
+// Examples:
+// AbilityValue = 150 → multiplier = 1.5x
+// AbilityValue = 500 → multiplier = 5.0x
+// AbilityValue = 1000 → multiplier = 10.0x
+```
+
+## Skill Ability 70: Stat Buffs
+
+### Overview
+
+Ability 70 provides temporary stat buffs while the skill is active. The effects are removed a few seconds after the skill has been stopped.
+
+### Supported Skills
+
+| SkillID | Effect Description |
+|---------|--------------------|
+| 398     | Stat buff (varies by skill level) |
+| 399     | Stat buff (varies by skill level) |
+| 400     | Stat buff (varies by skill level) |
+| 401     | Stat buff (varies by skill level) |
+
+<Note>
+The effect(s) will be removed a few seconds after the skill has been stopped. Plan your combat strategy accordingly.
+</Note>
+
+### Usage Example
+
+<Steps>
+  <Step title="Activate Skill">
+    Use a skill with ability 70 (e.g., SkillID 398-401).
+  </Step>
+  
+  <Step title="Receive Buff">
+    Your character receives the stat buff immediately upon activation.
+  </Step>
+  
+  <Step title="Maintain Active">
+    Keep the skill active to maintain the buff. The buff persists as long as the skill is active.
+  </Step>
+  
+  <Step title="Buff Removal">
+    When you stop the skill, the buff will be removed after a few seconds (grace period).
+  </Step>
+</Steps>
+
+## Skill Ability 87: EXP Multiplier
+
+### Overview
+
+Ability 87 provides experience multipliers similar to ability 35, but with different item requirements and scaling.
+
+### Items and Configuration
+
+| ItemID | SkillID | SkillLv | AbilityValue | Description |
+|--------|---------|---------|--------------|-------------|
+| 101112 | 432     | 2       | Varies       | EXP Multiplier Level 2 |
+| 101113 | 432     | 3       | Varies       | EXP Multiplier Level 3 |
+
+<Note>
+The ability value is expected to be greater than 100. The library divides the ability value by 100 to get the actual multiplier (same as ability 35).
+</Note>
+
+### Getting Started
+
+```
+To test Skill Ability 87:
+1. Obtain Item 101112 or 101113
+2. Use the item to learn Skill 432
+3. Activate the skill
+4. Kill monsters to receive multiplied experience
+```
+
+## Packet 0x511 Compatibility
+
+<Warning>
+Episode 6 clients expect packet `0x511` to be 21 bytes, while Episode 5 sends 20 bytes. This causes packet underflow errors in the client log.
+</Warning>
+
+### The Issue
+
+The EP5 `0x511` packet structure:
+- **Size**: 20 bytes
+
+ The EP6 `0x511` packet structure:
+- **Size**: 21 bytes
+- **New Field**: `ToggleType` (1 byte)
+
+### Impact
+
+You may see errors in your client log file like:
+```
+[ERROR] Packet underflow: Expected 21 bytes, received 20 bytes
+```
+
+### Resolution Status
+
+<Note>
+There are 25 references to packet 0x511 in ps_game. The solution is not as simple as changing the packet length argument. This remains an open compatibility issue.
+</Note>
+
+## Configuration
+
+No special configuration files are required for skill abilities. The system is built into the game library.
+
+### Creating Custom EXP Stones
+
+To create a custom experience stone:
+
+```sql
+-- Create the item
+INSERT INTO Items (ItemID, ItemName, Type, TypeID, Effect)
+VALUES (999999, 'Custom EXP Stone', 100, 1, YOUR_EFFECT_ID)
+
+-- Create the skill
+INSERT INTO Skills (SkillID, SkillName, Ability, AbilityValue)
+VALUES (999, 'Custom EXP Buff', 35, 300)  -- 3.0x multiplier
+
+-- Link item to skill
+UPDATE Items SET SkillID = 999 WHERE ItemID = 999999
+```
+
+<ParamField path="AbilityValue" type="integer" required>
+  The experience multiplier value.
+  
+  - Must be greater than 100
+  - Divided by 100 to get actual multiplier
+  - Example: 150 = 1.5x, 500 = 5.0x, 1000 = 10.0x
+</ParamField>
+
+## Best Practices
+
+1. **Stack EXP Buffs**: Combine multiple EXP stones for maximum experience gain
+2. **Plan Buff Duration**: Use ability 70 buffs strategically in difficult combat
+3. **Monitor Cooldowns**: Track skill cooldowns to maintain continuous buffs
+4. **Optimize Grinding**: Use EXP multipliers in high-density monster areas
+5. **Test Before Deployment**: Always test custom skill abilities on non-production servers
+
+## Troubleshooting
+
+<Accordion title="EXP Multiplier Not Working">
+  - Verify the skill has Ability = 35 or 87
+  - Check that AbilityValue > 100
+  - Ensure the skill is active (check buff bar)
+  - Verify you're killing monsters (not players)
+  - Check server logs for calculation errors
+</Accordion>
+
+<Accordion title="Stat Buff (Ability 70) Not Applying">
+  - Verify the skill is in the supported range (398-401)
+  - Ensure the skill is successfully activated
+  - Check for conflicting buffs or debuffs
+  - Verify your client displays the buff icon
+  - Try reactivating the skill
+</Accordion>
+
+<Accordion title="Buff Persists After Skill Stops">
+  - This is expected behavior - buffs remain for a few seconds
+  - If buff persists indefinitely, check for server-side bugs
+  - Relog to force removal of stuck buffs
+  - Report persistent issues with specific SkillID to developers
+</Accordion>
+
+<Accordion title="Packet 0x511 Errors in Client Log">
+  - These errors are expected in Episode 6 clients
+  - The errors do not affect gameplay functionality
+  - No client-side fix is available currently
+  - Server-side fix requires modifying 25+ packet references
+  - You can safely ignore these errors
+</Accordion>
+
+## Limitations
+
+<Warning>
+- Only abilities 35, 70, and 87 are supported
+- Abilities 52-57, 73, 74, and 78 are not implemented
+- Packet 0x511 compatibility issues exist
+- Custom skills must use supported ability IDs
+</Warning>
+
+## Advanced: Modifying CUser::AddExpFromUser
+
+The library modifies the experience calculation function to support new ability values:
+
+```cpp
+void CUser::AddExpFromUser(uint32_t exp, CMob* mob)
+{
+    // Check for active EXP buff skills
+    auto skill = GetActiveSkill();
+    
+    if (skill && (skill.Ability == 35 || skill.Ability == 87))
+    {
+        if (skill.AbilityValue > 100)
+        {
+            float multiplier = skill.AbilityValue / 100.0f;
+            exp = static_cast<uint32_t>(exp * multiplier);
+        }
+    }
+    
+    // Original experience addition code
+    AddExp(exp);
+}
+```
+
+## Related Features
+
+- [Configuration Reference](/reference/configuration) - Configuration files and settings
+- [Data Formats](/reference/data-formats) - SData formats including Skill EP6
+- [Cooldowns](/reference/cooldowns) - Item and skill cooldown tables

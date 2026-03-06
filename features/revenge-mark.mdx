@@ -1,0 +1,260 @@
+---
+title: "Revenge Mark System"
+description: "Track player kills and display visual effects based on consecutive kills against the same target"
+---
+
+## Overview
+
+The Revenge Mark system tracks consecutive kills between players and displays progressively more intense visual effects as the kill count increases. This system adds a layer of rivalry tracking to PvP encounters, showing which player has dominated the matchup.
+
+<Note>
+The kill count increments up to a maximum of 999 kills. Different visual effects are displayed based on the current kill count.
+</Note>
+
+## Kill Count Effects
+
+The game renders different effects based on the number of times you've killed the same player:
+
+| Kill Count | Effect Name | Effect Data ID | Description |
+|------------|-------------|----------------|-------------|
+| 1 | RevengeMark_Loop_01.EFT | 265 | First kill effect |
+| 2 | RevengeMark_Loop_02.EFT | 266 | Second kill effect |
+| 3 | RevengeMark_Loop_03.EFT | 267 | Third kill effect |
+| 4 | RevengeMark_Loop_04.EFT | 268 | Fourth kill effect |
+| 5 | RevengeMark_Loop_05.EFT | 269 | Fifth kill effect |
+| 6 | RevengeMark_Loop_06.EFT | 270 | Sixth kill effect |
+| 7 | RevengeMark_Loop_07.EFT | 271 | Seventh kill effect |
+| 8-999 | RevengeMark_Loop_08.EFT | 272 | Maximum kill effect |
+
+<Warning>
+The library will increment the kill count up to 999. After reaching 999 kills, the counter stops incrementing.
+</Warning>
+
+## Notice Effects
+
+Special notice effects are displayed based on whether the kill count is odd, even, or reaches the maximum:
+
+| Condition | Effect Name | Effect Data ID | When Displayed |
+|-----------|-------------|----------------|----------------|
+| Odd number | RevengeMark_Notice_01.EFT | 262 | Kill counts: 1, 3, 5, 7, 9, etc. |
+| Even number | RevengeMark_Notice_02.EFT | 263 | Kill counts: 2, 4, 6, 8, 10, etc. |
+| 999 kills | RevengeMark_Notice_03.EFT | 264 | When reaching maximum kills |
+
+## System Messages
+
+The Revenge Mark system uses the following system messages:
+
+```
+508  "Your revenge to <t> has succeeded!"
+509  "<t> killed you <v> time(s)."
+```
+
+### Message Variables
+
+- `<t>`: Target player name
+- `<v>`: Kill count value
+
+<Note>
+System message 509 is new to Episode 6 and was added by the client library to support the Revenge Mark system.
+</Note>
+
+## How It Works
+
+<Steps>
+  <Step title="First Kill">
+    When you kill another player for the first time, the system initializes a kill counter for that specific player matchup.
+    
+    Effect displayed: RevengeMark_Loop_01.EFT (265)
+  </Step>
+  
+  <Step title="Subsequent Kills">
+    Each time you kill the same player, the counter increments and a new effect is displayed based on the total kill count.
+    
+    Effects progress from Loop_01 through Loop_08.
+  </Step>
+  
+  <Step title="Notice Notification">
+    Special notice effects appear to emphasize milestone kills (odd/even alternation, or reaching 999).
+  </Step>
+  
+  <Step title="Counter Persistence">
+    The kill count persists for the current session. When either player logs out, the counter may reset depending on server configuration.
+  </Step>
+</Steps>
+
+## Visual Effect Progression
+
+<Accordion title="Effect Intensity Levels">
+  The visual effects become progressively more intense as the kill count increases:
+  
+  - **Kills 1-3**: Subtle effects, small visual indicators
+  - **Kills 4-6**: More noticeable effects, increasing in size and color intensity
+  - **Kill 7**: Significant visual upgrade, highly visible
+  - **Kills 8-999**: Maximum intensity effect, extremely prominent display
+  
+  The effect at 8+ kills remains constant, showing you've completely dominated this opponent.
+</Accordion>
+
+## Example Scenarios
+
+### Scenario 1: New Rivalry
+
+```
+Player A kills Player B (1st time)
+- Effect: RevengeMark_Loop_01.EFT
+- Notice: RevengeMark_Notice_01.EFT (odd number)
+- Message: "Your revenge to Player B has succeeded!"
+
+Player B sees:
+- Message: "Player A killed you 1 time(s)."
+```
+
+### Scenario 2: Escalating Rivalry
+
+```
+Player A kills Player B (5th time)
+- Effect: RevengeMark_Loop_05.EFT
+- Notice: RevengeMark_Notice_01.EFT (odd number)
+- Message: "Your revenge to Player B has succeeded!"
+
+Player B sees:
+- Message: "Player A killed you 5 time(s)."
+```
+
+### Scenario 3: Total Domination
+
+```
+Player A kills Player B (999th time)
+- Effect: RevengeMark_Loop_08.EFT
+- Notice: RevengeMark_Notice_03.EFT (maximum)
+- Message: "Your revenge to Player B has succeeded!"
+- Counter stops incrementing
+
+Player B sees:
+- Message: "Player A killed you 999 time(s)."
+```
+
+## Implementation Details
+
+### Counter Tracking
+
+The system tracks kill counts in a player-vs-player basis:
+
+```cpp
+struct RevengeMarkData
+{
+    uint32_t killerId;     // Player who got the kill
+    uint32_t victimId;     // Player who was killed
+    uint16_t killCount;    // Number of times killer killed victim
+};
+
+// Increment kill count (max 999)
+if (revengeData.killCount < 999)
+    revengeData.killCount++;
+```
+
+### Effect Selection
+
+```cpp
+int GetLoopEffectId(int killCount)
+{
+    if (killCount >= 8) return 272;  // Max effect
+    if (killCount >= 1 && killCount <= 7)
+        return 264 + killCount;      // Effects 265-271
+    
+    return 0;  // No effect
+}
+
+int GetNoticeEffectId(int killCount)
+{
+    if (killCount == 999) return 264;     // Maximum kills
+    if (killCount % 2 == 0) return 263;   // Even number
+    return 262;                            // Odd number
+}
+```
+
+## Configuration
+
+No special configuration files are required for the Revenge Mark system. It works automatically once the Episode 6 game library is installed.
+
+<Note>
+The Revenge Mark system is built into the game service and requires no additional setup beyond installing the sdev library.
+</Note>
+
+## Client Support
+
+The Revenge Mark system requires Episode 6 client support:
+
+- ✅ Effect files (RevengeMark_*.EFT) must be present in client
+- ✅ System message 509 must be defined in client strings
+- ✅ EffectData.SData must include effect IDs 262-272
+
+## Best Practices
+
+1. **Monitor Kill Counts**: Use revenge marks as indicators of player skill gaps
+2. **Strategic Awareness**: High revenge marks indicate a player you may want to avoid
+3. **Team Communication**: Call out players with high revenge mark counts
+4. **Server Events**: Consider hosting revenge mark tournaments or competitions
+5. **Anti-Griefing**: Monitor for potential griefing scenarios with extremely high counts
+
+## Troubleshooting
+
+<Accordion title="Effects Not Displaying">
+  - Verify client has all RevengeMark_*.EFT files in the effects directory
+  - Check that EffectData.SData includes effect IDs 262-272
+  - Ensure client version is Episode 6 compatible
+  - Verify no client modifications are interfering with effect rendering
+</Accordion>
+
+<Accordion title="System Messages Not Showing">
+  - Verify system messages 508 and 509 exist in client strings
+  - Check that message ID 509 was properly added to the client
+  - Ensure the client string table is not corrupted
+  - Try relogging to refresh client message cache
+</Accordion>
+
+<Accordion title="Kill Count Not Incrementing">
+  - Verify the sdev library is properly loaded
+  - Check server logs for any errors related to revenge marks
+  - Ensure both players are in valid PvP zones
+  - Verify the kill is being registered by the server (check combat logs)
+</Accordion>
+
+<Accordion title="Counter Resets Unexpectedly">
+  Kill counters may reset when:
+  - Either player logs out (depending on server configuration)
+  - Server restarts
+  - Players change maps/zones (depending on implementation)
+  - Specific time periods elapse (if configured)
+  
+  Check your server's specific Revenge Mark persistence settings.
+</Accordion>
+
+## Integration Ideas
+
+### Leaderboards
+
+Create leaderboards tracking:
+- Highest revenge mark count
+- Most revenge marks against different players
+- Longest active revenge mark streak
+
+### Achievements
+
+Award achievements for:
+- Reaching specific kill count milestones (10, 50, 100, 500, 999)
+- Getting revenge on someone who has a mark on you
+- Maintaining multiple high revenge marks simultaneously
+
+### Rewards
+
+Provide rewards based on:
+- Total revenge mark kills accumulated
+- Breaking someone else's revenge mark streak
+- Surviving against someone with a high revenge mark on you
+
+## Related Features
+
+- PvP Systems - Core combat mechanics that trigger revenge marks
+- Ranking System - Track overall PvP performance
+- Guild Wars - Revenge marks in guild vs guild combat

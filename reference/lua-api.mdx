@@ -1,0 +1,524 @@
+---
+title: Lua API Reference
+description: Complete Lua scripting API for monster AI and behavior
+---
+
+This page documents the Lua API for scripting monster AI and behavior in Episode 6. The developers used Hungarian notation to express the data type of parameters.
+
+## Parameter Notation
+
+Parameter prefixes indicate their data type:
+
+- `dw` - DWORD (unsigned 32-bit integer)
+- `n` - Integer (signed)
+- `b` - Boolean
+- `by` - BYTE (unsigned 8-bit integer)
+- `sz` - String (null-terminated character array)
+- `f` - Float
+- `dl` - Double or long
+- `w` - WORD (unsigned 16-bit integer)
+
+---
+
+## Event Handlers
+
+Event handlers are automatically called by the game engine when specific events occur.
+
+<ResponseField name="OnAttacked" type="function">
+  Called when the mob is attacked by a character.
+  
+  **Parameters:**
+  - `dwTime` (integer) - Current game time in ticks
+  - `dwCharId` (integer) - Character ID of the attacker
+  
+  ```lua
+  function OnAttacked(dwTime, dwCharId)
+      szCharName = Mob:LuaGetName(dwCharId)
+      Mob:LuaSay(szCharName..", you are a fool to challenge me!", 100.0)
+  end
+  ```
+</ResponseField>
+
+<ResponseField name="OnAttackable" type="function">
+  Called when the mob becomes attackable.
+  
+  **Parameters:**
+  - `dwTime` (integer) - Current game time in ticks
+  - `dwCharId` (integer) - Character ID
+  
+  ```lua
+  function OnAttackable(dwTime, dwCharId)
+  end
+  ```
+</ResponseField>
+
+<ResponseField name="OnNormalReset" type="function">
+  Called when the mob's AI resets to normal state.
+  
+  **Parameters:**
+  - `dwTime` (integer) - Current game time in ticks
+  
+  ```lua
+  function OnNormalReset(dwTime)
+  end
+  ```
+</ResponseField>
+
+<ResponseField name="OnDeath" type="function">
+  Called when the mob dies.
+  
+  **Parameters:**
+  - `dwTime` (integer) - Current game time in ticks
+  - `dwAttackedCount` (integer) - Number of times the mob was attacked
+  
+  ```lua
+  function OnDeath(dwTime, dwAttackedCount)
+      Mob:LuaSay("I will have my revenge!", 100.0)
+  end
+  ```
+</ResponseField>
+
+<ResponseField name="OnReturnHome" type="function">
+  Called when the mob returns to its spawn point (leash).
+  
+  **Parameters:**
+  - `dwTime` (integer) - Current game time in ticks
+  - `dwAttackedCount` (integer) - Number of times the mob was attacked
+  
+  ```lua
+  function OnReturnHome(dwTime, dwAttackedCount)
+      Mob:LuaSay("You will not defeat me!", 100.0)
+      bOnAttacked = 0
+      dwNextCreateTime = 0
+  end
+  ```
+</ResponseField>
+
+<ResponseField name="OnMoveEnd" type="function">
+  Called when the mob finishes moving.
+  
+  **Parameters:**
+  - `dwTime` (integer) - Current game time in ticks
+  
+  ```lua
+  function OnMoveEnd(dwTime)
+  end
+  ```
+</ResponseField>
+
+---
+
+## Functions
+
+These functions are called by the game engine at specific times.
+
+<ResponseField name="Init" type="function">
+  Called once when the mob is initialized. Use this to set up initial state variables.
+  
+  ```lua
+  function Init()
+      bOnAttacked = 0
+      dwNextCreateTime = 0
+  end
+  ```
+</ResponseField>
+
+<ResponseField name="WhileCombat" type="function">
+  Called repeatedly while the mob is in combat. Use this for combat behavior logic.
+  
+  **Parameters:**
+  - `dwTime` (integer) - Current game time in ticks
+  - `dwHPPercent` (integer) - Current HP percentage (0-100)
+  - `dwAttackedCount` (integer) - Number of times attacked
+  
+  ```lua
+  function WhileCombat(dwTime, dwHPPercent, dwAttackedCount)
+      Mob:LuaRecover(1, 0.1)
+      
+      if (dwHPPercent > 20) then
+          nResult = math.random(1, 20)
+          if (nResult == 1) then
+              byJob = math.random(0, 5)
+              Mob:LuaSay("Leave my presence at once!", 30.0)
+              Mob:LuaResetAggro()
+              Mob:LuaRecallUser(byJob, 30.0, 73, 40.077, 4.683, 59.303)
+          end
+      end
+  end
+  ```
+</ResponseField>
+
+---
+
+## Mob Methods
+
+These methods are called on the `Mob` object to control mob behavior.
+
+<ResponseField name="LuaGetNumberAggro" type="function">
+  Gets aggro information for a specific target.
+  
+  **Parameters:**
+  - `dwNumber` (integer) - Target index
+  
+  ```lua
+  Mob:LuaGetNumberAggro(dwNumber)
+  ```
+</ResponseField>
+
+<ResponseField name="LuaGetMinAggroEx" type="function">
+  Gets the target with minimum aggro.
+  
+  ```lua
+  Mob:LuaGetMinAggroEx()
+  ```
+</ResponseField>
+
+<ResponseField name="LuaAttackOrderSurroundMob" type="function">
+  Orders surrounding mobs to attack a target.
+  
+  **Parameters:**
+  - `dwCharId` (integer) - Target character ID
+  - `dlPosX` (double) - X coordinate
+  - `dlPosZ` (double) - Z coordinate
+  
+  ```lua
+  Mob:LuaAttackOrderSurroundMob(dwCharId, dlPosX, dlPosZ)
+  ```
+</ResponseField>
+
+<ResponseField name="LuaSay" type="function">
+  Makes the mob say a message within a specified distance.
+  
+  **Parameters:**
+  - `szMessage` (string) - Message to display
+  - `fDist` (float) - Maximum distance players can see the message
+  
+  ```lua
+  Mob:LuaSay("You dare challenge me?", 100.0)
+  ```
+</ResponseField>
+
+<ResponseField name="LuaSayByIndex" type="function">
+  Makes the mob say a message using a system message index.
+  
+  **Parameters:**
+  - `wIndex` (word) - System message index
+  - `fDist` (float) - Maximum distance
+  
+  ```lua
+  Mob:LuaSayByIndex(wIndex, fDist)
+  ```
+</ResponseField>
+
+<ResponseField name="LuaSayByVoice" type="function">
+  Plays a voice file for the mob.
+  
+  **Parameters:**
+  - `szFileName` (string) - Voice file name
+  - `fDist` (float) - Maximum distance
+  
+  ```lua
+  Mob:LuaSayByVoice(szFileName, fDist)
+  ```
+</ResponseField>
+
+<ResponseField name="LuaGetName" type="function">
+  Gets the name of a character.
+  
+  **Parameters:**
+  - `dwCharId` (integer) - Character ID
+  
+  **Returns:** String containing the character name
+  
+  ```lua
+  szCharName = Mob:LuaGetName(dwCharId)
+  Mob:LuaSay(szCharName..", you are doomed!", 100.0)
+  ```
+</ResponseField>
+
+<ResponseField name="LuaCreateMob" type="function">
+  Spawns new mobs at a location.
+  
+  **Parameters:**
+  - `dwMobId` (integer) - Mob type ID to spawn
+  - `nCount` (integer) - Number of mobs to spawn
+  - `dlPosX` (double) - X coordinate
+  - `dlPosZ` (double) - Z coordinate
+  
+  ```lua
+  Mob:LuaCreateMob(dwMobId, nCount, dlPosX, dlPosZ)
+  ```
+</ResponseField>
+
+<ResponseField name="LuaAttackAI" type="function">
+  Makes the mob use a skill on a target.
+  
+  **Parameters:**
+  - `dwSkillId` (integer) - Skill ID to use
+  - `dwCharId` (integer) - Target character ID
+  
+  ```lua
+  Mob:LuaAttackAI(dwSkillId, dwCharId)
+  ```
+</ResponseField>
+
+<ResponseField name="LuaSetTarget" type="function">
+  Sets the mob's current target.
+  
+  **Parameters:**
+  - `dwCharId` (integer) - Target character ID
+  
+  ```lua
+  Mob:LuaSetTarget(dwCharId)
+  ```
+</ResponseField>
+
+<ResponseField name="LuaResetTargetingTerm" type="function">
+  Resets the targeting term/cooldown.
+  
+  **Parameters:**
+  - `dwTerm` (integer) - Term duration in ticks
+  
+  ```lua
+  Mob:LuaResetTargetingTerm(dwTerm)
+  ```
+</ResponseField>
+
+<ResponseField name="LuaSetOnlyAttack" type="function">
+  Sets whether the mob can only use Lua-scripted attacks.
+  
+  **Parameters:**
+  - `bLuaAttack` (boolean) - True to only use Lua attacks
+  
+  ```lua
+  Mob:LuaSetOnlyAttack(bLuaAttack)
+  ```
+</ResponseField>
+
+<ResponseField name="LuaHoldPosion" type="function">
+  Sets whether the mob holds its position.
+  
+  **Parameters:**
+  - `bHoldPosion` (boolean) - True to hold position
+  
+  ```lua
+  Mob:LuaHoldPosion(bHoldPosion)
+  ```
+</ResponseField>
+
+<ResponseField name="LuaGetMobCountByType" type="function">
+  Counts mobs of a specific type in an area.
+  
+  **Parameters:**
+  - `dwType` (integer) - Mob type ID
+  - `dlPosX` (double) - Center X coordinate
+  - `dlPosZ` (double) - Center Z coordinate
+  - `nAddDist` (integer) - Additional search distance
+  
+  **Returns:** Integer count of mobs found
+  
+  ```lua
+  Mob:LuaGetMobCountByType(dwType, dlPosX, dlPosZ, nAddDist)
+  ```
+</ResponseField>
+
+<ResponseField name="LuaSetUnBeatable" type="function">
+  Sets whether the mob is invulnerable.
+  
+  **Parameters:**
+  - `bUnBeatable` (boolean) - True to make invulnerable
+  
+  ```lua
+  Mob:LuaSetUnBeatable(bUnBeatable)
+  ```
+</ResponseField>
+
+<ResponseField name="LuaResetAggro" type="function">
+  Resets all aggro on the mob.
+  
+  ```lua
+  Mob:LuaResetAggro()
+  ```
+</ResponseField>
+
+<ResponseField name="LuaDeleteMob" type="function">
+  Removes mobs of a specific type from an area.
+  
+  **Parameters:**
+  - `dwMobId` (integer) - Mob type ID to remove
+  - `byCount` (byte) - Number of mobs to remove
+  - `dlPosX` (double) - Center X coordinate
+  - `dlPosZ` (double) - Center Z coordinate
+  
+  ```lua
+  Mob:LuaDeleteMob(dwMobId, byCount, dlPosX, dlPosZ)
+  ```
+</ResponseField>
+
+<ResponseField name="LuaFixedMove" type="function">
+  Makes the mob move to a fixed location.
+  
+  **Parameters:**
+  - `nMoveMode` (integer) - Movement mode
+  - `dlPosX` (double) - Target X coordinate
+  - `dlPosZ` (double) - Target Z coordinate
+  
+  ```lua
+  Mob:LuaFixedMove(nMoveMode, dlPosX, dlPosZ)
+  ```
+</ResponseField>
+
+<ResponseField name="LuaRecallUser" type="function">
+  Teleports players of a specific job within range to a location.
+  
+  **Parameters:**
+  - `byJob` (byte) - Job class filter (0-5, or use random)
+  - `fDist` (float) - Maximum distance to affect players
+  - `wMap` (word) - Target map ID
+  - `dlPosX` (double) - Target X coordinate
+  - `dlPosY` (double) - Target Y coordinate
+  - `dlPosZ` (double) - Target Z coordinate
+  
+  ```lua
+  byJob = math.random(0, 5)
+  Mob:LuaRecallUser(byJob, 30.0, 73, 40.077, 4.683, 59.303)
+  ```
+</ResponseField>
+
+<ResponseField name="LuaRecover" type="function">
+  Recovers HP, SP, or MP for the mob.
+  
+  **Parameters:**
+  - `byType` (byte) - Recovery type (1=HP, 2=SP, 3=MP)
+  - `dlValue` (double) - Amount to recover (can be percentage if < 1.0)
+  
+  ```lua
+  Mob:LuaRecover(1, 0.1)  -- Recover 10% HP
+  ```
+</ResponseField>
+
+<ResponseField name="LuaGetMobPos" type="function">
+  Gets the position of a specific mob.
+  
+  **Parameters:**
+  - `dwId` (integer) - Mob ID
+  - `fPosX` (float) - Output X coordinate
+  - `fPosZ` (float) - Output Z coordinate
+  
+  ```lua
+  Mob:LuaGetMobPos(dwId, fPosX, fPosZ)
+  ```
+</ResponseField>
+
+<ResponseField name="LuaGetMobHP" type="function">
+  Gets the HP of a specific mob.
+  
+  **Parameters:**
+  - `dwId` (integer) - Mob ID
+  
+  **Returns:** Integer HP value
+  
+  ```lua
+  Mob:LuaGetMobHP(dwId)
+  ```
+</ResponseField>
+
+<ResponseField name="LuaUpdateInZonePortal" type="function">
+  Updates portal state in the zone.
+  
+  **Parameters:**
+  - `nPortalId` (integer) - Portal ID
+  - `nCountry` (integer) - Country/faction
+  
+  ```lua
+  Mob:LuaUpdateInZonePortal(nPortalId, nCountry)
+  ```
+</ResponseField>
+
+---
+
+## Complete Example
+
+Here's a complete boss mob script demonstrating various API features:
+
+```lua
+Mob = LuaMob(CMob)
+math.randomseed(os.time())
+
+bOnAttacked = 0
+dwNextCreateTime = 0
+bMobSay = 0
+bMobCreate = 0
+
+function Init()
+end
+
+function OnAttacked(dwTime, dwCharId)
+    if (bOnAttacked == 0) then
+        szCharName = Mob:LuaGetName(dwCharId)
+        Mob:LuaSay(szCharName..", you are a fool to challenge me!", 100.0)
+        bOnAttacked = 1
+    end
+end
+
+function OnAttackable(dwTime, dwCharId)
+end
+
+function OnNormalReset(dwTime)
+end
+
+function OnDeath(dwTime, dwAttackedCount)
+    Mob:LuaSay("I will have my revenge!", 100.0)
+end
+
+function OnReturnHome(dwTime, dwAttackedCount)
+    Mob:LuaSay("You will not defeat me!", 100.0)
+    
+    bOnAttacked = 0
+    dwNextCreateTime = 0
+    bMobSay = 0
+    bMobCreate = 0
+end
+
+function OnMoveEnd(dwTime)
+end
+
+function WhileCombat(dwTime, dwHPPercent, dwAttackedCount)
+    -- Regenerate 10% HP continuously
+    Mob:LuaRecover(1, 0.1)
+    
+    -- At high HP, randomly teleport players away
+    if (dwHPPercent > 20) then
+        nResult = math.random(1, 20)
+        
+        if (nResult == 1) then
+            byJob = math.random(0, 5)
+            Mob:LuaSay("Leave my presence at once!", 30.0)
+            Mob:LuaResetAggro()
+            Mob:LuaRecallUser(byJob, 30.0, 73, 40.077, 4.683, 59.303)
+        end
+    end
+end
+```
+
+---
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Initialize Variables" icon="code">
+    Always initialize state variables in the `Init()` function or at the top of your script.
+  </Card>
+  
+  <Card title="Reset State" icon="rotate-left">
+    Reset all state variables in `OnReturnHome()` to ensure proper behavior when the mob leashes.
+  </Card>
+  
+  <Card title="Random Seed" icon="dice">
+    Use `math.randomseed(os.time())` at the start of your script for proper randomization.
+  </Card>
+  
+  <Card title="HP Checks" icon="heart">
+    Use `dwHPPercent` in `WhileCombat()` to trigger phase-based behavior.
+  </Card>
+</CardGroup>

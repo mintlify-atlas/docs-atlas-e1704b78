@@ -1,0 +1,188 @@
+---
+title: Data Formats
+description: SData file formats and structures for Episode 6
+---
+
+This page documents the data file formats used by the Episode 6 client and server.
+
+## SData File Formats
+
+The client uses the following SData format versions:
+
+| File Name | Format Version |
+|-----------|----------------|
+| Item.SData | EP6.4 |
+| Monster.SData | EP5 |
+| NpcQuest.SData | EP6 |
+| NpcSkill.SData | EP6 |
+| Skill.SData | EP6 |
+
+<Note>
+  The client binaries have been partially restored and may require manual import table modifications using tools like [PE Bear](https://github.com/hasherezade/pe-bear).
+</Note>
+
+---
+
+## NpcQuest Format (EP6)
+
+The Episode 6 NpcQuest format has significant changes from earlier versions.
+
+### Quest Results Structure
+
+<ResponseField name="Quest Results" type="array">
+  Episode 6 format supports **6 quest results** (increased from 5 in earlier versions).
+</ResponseField>
+
+<ResponseField name="Items per Result" type="integer">
+  Each quest result can contain **up to 3 items**.
+</ResponseField>
+
+### Server Compatibility
+
+<Warning>
+  The `ps_game` server in this repository has been modified to read the Episode 6 file format. See the changelog in the bin directory for more information.
+</Warning>
+
+### Structure Size Changes
+
+The structure size has increased to accommodate the additional quest result:
+
+- **EP5 Format**: 5 quest results
+- **EP6 Format**: 6 quest results with up to 3 items each
+
+---
+
+## Item Format (EP6.4)
+
+The Item SData uses the Episode 6.4 format.
+
+### Repair Cost Changes
+
+Repair cost calculations differ between Episode 5 and Episode 6.4:
+
+<Accordion title="Episode 5 Repair Cost">
+  ```cpp
+  RepairCost = (Item.Buy / 30.0) * (Damage / 400.0)
+  ```
+</Accordion>
+
+<Accordion title="Episode 6.4 Repair Cost">
+  ```cpp
+  RepairCost = (Item.Buy / 15.0) * (Damage / 400.0)
+  ```
+  
+  <Note>
+    The client endurance will not match the server endurance in real-time. Players should relog to see the correct repair costs.
+  </Note>
+</Accordion>
+
+### Item Set ID (Synergy)
+
+<ResponseField name="Drop" type="integer">
+  The `Drop` field contains the item set ID for synergy bonuses. Original item SData files can be used for testing.
+  
+  ```sql
+  USE PS_GameDefs
+  SELECT ItemName, ItemID, [Drop] FROM Items WHERE [Drop]=64
+  ```
+</ResponseField>
+
+---
+
+## Monster Format (EP5)
+
+The Monster SData uses the Episode 5 format.
+
+### AttackSpecial3 Field
+
+<ResponseField name="AttackSpecial3" type="integer">
+  Controls monster skill cooldowns. See the [Cooldowns](/reference/cooldowns) page for the mapping of values to tick durations.
+</ResponseField>
+
+---
+
+## Skill Format (EP6)
+
+The Skill SData uses the Episode 6 format.
+
+### Skill Abilities
+
+The server adds support for Episode 6 skill abilities:
+
+<ResponseField name="Ability 35" type="integer">
+  Experience multiplier stones. The ability value is expected to be greater than 100. The server divides the ability value by 100.
+  
+  **Supported Skills:**
+  - Skill 222 (Item 100042): 150% exp
+  - Skill 223 (Item 100043): 150% exp
+  - Skill 426 Level 2 (Item 101114): 500% exp
+  - Skill 426 Level 3 (Item 101115): 1000% exp
+  - Skill 427 Level 2 (Item 101117): 500% exp
+  - Skill 434 Level 2 (Item 101121): 200% exp
+  - Skill 434 Level 3 (Item 101122): 200% exp
+</ResponseField>
+
+<ResponseField name="Ability 70" type="integer">
+  Special combat effects. The effect(s) will be removed a few seconds after the skill has been stopped.
+  
+  **Supported Skills:**
+  - Skill 398
+  - Skill 399
+  - Skill 400
+  - Skill 401
+</ResponseField>
+
+<ResponseField name="Ability 87" type="integer">
+  Advanced buff abilities. The ability value is expected to be greater than 100. The server divides the ability value by 100.
+  
+  **Supported Skills:**
+  - Skill 432 Level 2 (Item 101112)
+  - Skill 432 Level 3 (Item 101113)
+</ResponseField>
+
+### Ability Value Calculation
+
+For abilities 35 and 87:
+
+```cpp
+auto actualValue = abilityValue / 100;
+// Example: 500 becomes 5.0x multiplier
+```
+
+---
+
+## NpcSkill Format (EP6)
+
+The NpcSkill SData uses the Episode 6 format for monster and NPC skill definitions.
+
+---
+
+## SetItem Format
+
+<ResponseField name="SetItem.SData" type="encrypted">
+  The client expects the SetItem.SData file to be encrypted.
+</ResponseField>
+
+### Set Bonus Display
+
+Set bonuses are displayed using the following format:
+
+```
+" Sinergia [5]\n- LUC +20\n- DEX +50\n- STR +70"
+```
+
+Where `[5]` indicates 5 items are required for the full set bonus.
+
+---
+
+## Configuration Directory
+
+All SData files and configuration should be placed in:
+
+```
+PSM_Client/Bin/Data/
+```
+
+For source code and examples, see:
+- Server data: `sdev/bin/data/`
+- Client data: `sdev-client/bin/data/`

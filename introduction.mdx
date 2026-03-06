@@ -1,0 +1,88 @@
+---
+title: "Introduction"
+description: "C++ libraries for improving Episode 6 support in Shaiya private servers"
+---
+
+# Shaiya Episode 6
+
+Shaiya Episode 6 is a comprehensive collection of C++ libraries designed to enhance Episode 6 support for Shaiya private servers. This project provides server-side and client-side modifications that implement authentic Episode 6 features while maintaining compatibility with existing server infrastructure.
+
+## What is Shaiya Episode 6?
+
+This project consists of multiple libraries that work together to provide:
+
+- **Game Service Enhancements** - Advanced features like Item Mall, Battlefield Move, and Reward Item systems
+- **Client Modifications** - Support for PT 182 client with bug fixes and feature enhancements
+- **Database Integration** - Extended database agent with character list equipment and name availability
+- **Security Patches** - Login service vulnerability fixes
+- **Core Infrastructure** - Shared types, packet definitions, and memory utilities
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Item Mall System" icon="shopping-cart" href="/features/item-mall">
+    Complete item mall implementation with stored procedures and point management
+  </Card>
+  <Card title="Battlefield Move" icon="arrows-up-down" href="/features/battlefield-move">
+    Instant battlefield teleportation with level-based zone restrictions
+  </Card>
+  <Card title="Skill Abilities" icon="wand-magic-sparkles" href="/features/skill-abilities">
+    Episode 6 skill abilities support including exp stones and special effects
+  </Card>
+  <Card title="Item Synergy" icon="link" href="/features/synergy">
+    Set item bonuses with configurable synergy effects
+  </Card>
+  <Card title="Rune Combination" icon="gem" href="/features/rune-combination">
+    Recreation rune and vial combination system
+  </Card>
+  <Card title="Lua Scripting" icon="code" href="/reference/lua-api">
+    Monster AI scripting with comprehensive Lua API
+  </Card>
+</CardGroup>
+
+## Architecture Overview
+
+The project is organized into specialized libraries:
+
+- **sdev** - Game service library with Episode 6 feature implementations
+- **sdev-client** - Client modifications for PT 182 client
+- **sdev-db** - Database agent service enhancements
+- **sdev-login** - Login service security patches
+- **shaiya** - Common types and packet definitions
+- **util** - Memory utilities and helper functions
+- **extensions** - C++ utility extensions
+
+## Built For
+
+This project is designed for Shaiya private server developers who want to:
+
+- Add authentic Episode 6 features to their servers
+- Maintain vanilla gameplay mechanics
+- Extend their server with custom configurations
+- Script complex monster AI behaviors
+- Provide a complete Episode 6.4 experience
+
+## Getting Started
+
+<CardGroup cols={2}>
+  <Card title="Prerequisites" icon="list-check" href="/prerequisites">
+    Check system requirements and dependencies
+  </Card>
+  <Card title="Installation" icon="download" href="/installation">
+    Install and configure the libraries
+  </Card>
+  <Card title="Server Libraries" icon="server" href="/server/sdev">
+    Explore the game service library
+  </Card>
+  <Card title="Features Guide" icon="book" href="/features/item-mall">
+    Learn about available features
+  </Card>
+</CardGroup>
+
+## Open Source
+
+Shaiya Episode 6 is open source and available on [GitHub](https://github.com/kurtekat/shaiya-episode-6). The project is built with C++20 and targets Windows 10 with Visual Studio 2019.
+
+<Note>
+This project implements features based on client specifications to maintain vanilla Episode 6 gameplay as closely as possible.
+</Note>

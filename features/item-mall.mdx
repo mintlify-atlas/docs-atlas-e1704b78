@@ -1,0 +1,103 @@
+---
+title: Item Mall
+description: Point-based item shop system for purchasing in-game items
+---
+
+The Item Mall feature enables players to purchase items using points through an in-game shop interface. This implementation follows the EP6 client specifications and maintains compatibility with the original game mechanics.
+
+## Overview
+
+The Item Mall system allows players to:
+- Purchase items using cash points
+- Gift items to other players
+- View their current point balance
+- Process transactions through stored procedures
+
+<Note>
+All Item Mall features are implemented based on client specifications with the intent to keep everything as vanilla as possible.
+</Note>
+
+## Installation
+
+<Steps>
+  <Step title="Install Stored Procedures">
+    Install the following stored procedures to enable Item Mall functionality:
+
+    ```sql title="Required Stored Procedures"
+    [dbo].[usp_Read_User_CashPoint_UsersMaster]
+    [dbo].[usp_Save_User_BuyPointItems2]
+    [dbo].[usp_Save_User_GiftPointItems2]
+    [dbo].[usp_Update_UserPoint]
+    ```
+  </Step>
+
+  <Step title="Create or Alter Procedures">
+    The stored procedures are original code. If you receive an error during installation, change `ALTER` to `CREATE` and try again.
+
+    <Warning>
+    Ensure your database user has the necessary permissions to create or alter stored procedures.
+    </Warning>
+  </Step>
+
+  <Step title="Verify Installation">
+    Test the Item Mall by logging into the game and attempting to view the point shop interface.
+  </Step>
+</Steps>
+
+## Database Procedures
+
+### Read User Cash Points
+
+<ParamField path="usp_Read_User_CashPoint_UsersMaster" type="procedure">
+  Retrieves the current cash point balance for a user from the UsersMaster table.
+</ParamField>
+
+### Buy Point Items
+
+<ParamField path="usp_Save_User_BuyPointItems2" type="procedure">
+  Processes the purchase of items using cash points. This is the EP6 version of the buy procedure.
+</ParamField>
+
+### Gift Point Items
+
+<ParamField path="usp_Save_User_GiftPointItems2" type="procedure">
+  Handles gifting items to other players using cash points. This is the EP6 version of the gift procedure.
+</ParamField>
+
+### Update User Points
+
+<ParamField path="usp_Update_UserPoint" type="procedure">
+  Updates the user's point balance after transactions.
+</ParamField>
+
+## Stored Procedure Location
+
+The stored procedures are available at:
+```
+https://github.com/kurtekat/shaiya-episode-6/tree/main/sdev-db/bin/sql
+```
+
+## Troubleshooting
+
+<Accordion title="Error: ALTER PROCEDURE failed">
+  If you receive an error stating that the procedure doesn't exist, change `ALTER` to `CREATE` in the SQL script and execute it again.
+</Accordion>
+
+<Accordion title="Permissions Issues">
+  Ensure the database user has the following permissions:
+  - CREATE PROCEDURE
+  - ALTER PROCEDURE
+  - EXECUTE on the procedures
+</Accordion>
+
+## Integration Notes
+
+- The Item Mall uses the EP6 version of stored procedures (indicated by the `2` suffix)
+- Point balances are stored in the `UsersMaster` table
+- All transactions are processed server-side for security
+- The client interface is automatically enabled when the stored procedures are properly configured
+
+## Related Features
+
+- **Reward Item**: Another point-based system for time-based rewards
+- **Database Configuration**: See the main configuration guide for database setup

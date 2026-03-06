@@ -1,0 +1,58 @@
+---
+title: "sdev-login"
+description: "Login service library that patches well-known security vulnerabilities"
+---
+
+## Overview
+
+The `sdev-login` library patches two well-known login service vulnerabilities in Shaiya Episode 6, providing essential security improvements for production deployments.
+
+## Environment
+
+- **Platform**: Windows 10
+- **IDE**: Visual Studio 2019
+- **Language**: C++ 20
+- **Prerequisites**: [Microsoft Visual C++ Redistributable](https://aka.ms/vs/17/release/vc_redist.x86.exe)
+
+## Security Patches
+
+This library addresses critical security vulnerabilities in the login service that could be exploited by malicious users.
+
+<Warning>
+The specific vulnerabilities are not disclosed in detail to prevent exploitation. Always use the patched version in production environments.
+</Warning>
+
+### Vulnerability Protection
+
+<CardGroup cols={2}>
+  <Card title="Vulnerability #1" icon="shield-halved">
+    Patches the first well-known login service vulnerability
+  </Card>
+  
+  <Card title="Vulnerability #2" icon="shield">
+    Patches the second well-known login service vulnerability
+  </Card>
+</CardGroup>
+
+## Installation
+
+1. Download the library from the repository
+2. Ensure the Microsoft Visual C++ Redistributable is installed
+3. Deploy the library to your login service directory
+4. Restart the login service
+
+<Note>
+No additional configuration or database changes are required. The patches are applied automatically when the library is loaded.
+</Note>
+
+## Related Components
+
+<CardGroup cols={2}>
+  <Card title="sdev" icon="gamepad" href="/server/sdev">
+    Game service library with Item Mall, Battlefield Move, and more
+  </Card>
+  
+  <Card title="sdev-db" icon="database" href="/server/sdev-db">
+    Database agent service library
+  </Card>
+</CardGroup>

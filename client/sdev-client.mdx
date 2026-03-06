@@ -1,0 +1,185 @@
+---
+title: "sdev-client"
+description: "Client library for Shaiya PT client 182 modifications"
+---
+
+The `sdev-client` library provides modifications and enhancements for Shaiya Episode 6 PT client version 182. This library handles client-side features including battlefield movement, chat exploit fixes, recovery packet handling, and more.
+
+## Environment Requirements
+
+- **OS**: Windows 10
+- **IDE**: Visual Studio 2019
+- **Language**: C++ 20
+
+## Prerequisites
+
+<Note>
+The DirectX SDK installer creates a system environment variable named `DXSDK_DIR` that specifies the installation directory.
+</Note>
+
+- [Microsoft Visual C++ Redistributable](https://aka.ms/vs/17/release/vc_redist.x86.exe)
+- [Microsoft DirectX SDK (June 2010)](https://www.microsoft.com/en-us/download/details.aspx?id=6812)
+
+## Binary Restoration
+
+The client binaries have been partially restored to their original condition. For adding new imports, it's recommended to use [PE Bear](https://github.com/hasherezade/pe-bear).
+
+<Warning>
+When working with DLL boundaries, be aware of [potential errors passing CRT objects across DLL boundaries](https://learn.microsoft.com/en-us/cpp/c-runtime-library/potential-errors-passing-crt-objects-across-dll-boundaries?view=msvc-170).
+</Warning>
+
+## SData Formats
+
+The library supports multiple SData format versions:
+
+| Data Type | Format |
+|-----------|--------|
+| Item      | EP6.4  |
+| Monster   | EP5    |
+| NpcQuest  | EP6    |
+| NpcSkill  | EP6    |
+| Skill     | EP6    |
+
+## Battlefield Move
+
+The battlefield move implementation is based on US client 223 (EP7).
+
+<Warning>
+Do not expect the EP8 interface and mechanics. This is an EP7-based implementation.
+</Warning>
+
+### Data Structure
+
+Add the following files to your data directory:
+
+```
+data/
+├─── BattleFieldMoveInfo_Client
+├─── interface/
+│    ├─── main_stats_pvp.tga
+│    ├─── main_stats_pvp_button.tga
+```
+
+The library reads the ini data from the archive and parses the contents automatically.
+
+### Configuration
+
+<Accordion title="Configuration Guidelines">
+- Assign a unique value to each `MAP_NO` key
+- Define a unique level range for each battlefield
+- Movement is instant, like the official server
+- Certain debuffs will prevent movement
+- Moving to the same zone is not allowed
+</Accordion>
+
+<Note>
+The game uses MapID to determine which system message line contains the map name. The client chooses the battlefield based on level range, not MapID.
+</Note>
+
+## Chat Color Exploit Fix
+
+<Warning>
+Without this fix, malicious chat messages can cause:
+```
+STATUS_STACK_BUFFER_OVERRUN encountered
+A breakpoint instruction (__debugbreak() statement or a similar call) was executed in game.exe.
+```
+</Warning>
+
+The solution involves increasing stack allocation in two functions to prevent buffer overrun. See the [Old New Thing blog post](https://devblogs.microsoft.com/oldnewthing/20080404-00/?p=22863) for technical details.
+
+### Assembly Code Modifications
+
+<CodeGroup>
+
+```asm ps0182 (PT)
+// Function 1
+0047DB76:
+sub esp,000005BC
+
+0047DB83:
+mov [esp+000005B8],eax
+
+0047E871:
+mov ecx,[esp+000005C4]
+
+// Function 2
+0057C280:
+sub esp,0000054C
+
+0057C28D:
+mov [esp+00000548],eax
+
+0057C297:
+mov esi,[esp+0000055C]
+
+0057C9F9:
+mov ecx,[esp+00000558]
+
+0057CA0B:
+add esp,0000054C
+```
+
+```asm ps0171 (ES)
+// Function 1
+0047D896:
+sub esp,000005BC
+
+0047D8A3:
+mov [esp+000005B8],eax
+
+0047E591:
+mov ecx,[esp+000005C4]
+
+// Function 2
+0057C670:
+sub esp,0000054C
+
+0057C67D:
+mov [esp+00000548],eax
+
+0057C687:
+mov esi,[esp+0000055C]
+
+0057CDE9:
+mov ecx,[esp+00000558]
+
+0057CDFB:
+add esp,0000054C
+```
+
+</CodeGroup>
+
+## Recovery Packet Handling
+
+<Note>
+Episode 6.4 (and greater) clients do not add the values in the 0x505 packet handler by default.
+</Note>
+
+### Packet 0x505 Handler Addresses
+
+<CodeGroup>
+
+```asm ps0171 (ES)
+00594AC8  MOV DWORD PTR DS:[EAX+158],ESI
+00594ACE  MOV DWORD PTR DS:[EAX+160],EDX
+00594AD4  MOV DWORD PTR DS:[EAX+168],ECX
+
+00594AEB  MOV DWORD PTR DS:[914478],ESI
+00594AF1  MOV DWORD PTR DS:[91447C],EDX
+00594AF7  MOV DWORD PTR DS:[914480],ECX
+```
+
+```asm ps0182 (PT)
+005942D8  MOV DWORD PTR DS:[EAX+158],ESI
+005942DE  MOV DWORD PTR DS:[EAX+160],EDX
+005942E4  MOV DWORD PTR DS:[EAX+168],ECX
+
+005942FB  MOV DWORD PTR DS:[914478],ESI
+00594301  MOV DWORD PTR DS:[91447C],EDX
+00594307  MOV DWORD PTR DS:[914480],ECX
+```
+
+</CodeGroup>
+
+These memory addresses need to be patched to properly handle character recovery values (HP, SP, MP).

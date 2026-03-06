@@ -1,0 +1,80 @@
+---
+title: "sdev-db"
+description: "Database agent service library with character list packet and name availability support"
+---
+
+## Overview
+
+The `sdev-db` library is the database agent service component for Shaiya Episode 6. It adds support for the character list packet (equipment) and the name availability packet.
+
+## Environment
+
+- **Platform**: Windows 10
+- **IDE**: Visual Studio 2019
+- **Language**: C++ 20
+- **Prerequisites**: [Microsoft Visual C++ Redistributable](https://aka.ms/vs/17/release/vc_redist.x86.exe)
+
+## Features
+
+### Character List Packet Support
+
+The library enhances the character list functionality by including equipment data in the character selection screen packets. This allows the client to display character equipment during character selection.
+
+### Name Availability Packet
+
+Implements name availability checking to validate character names before creation, preventing duplicate names and ensuring compliance with naming rules.
+
+## Stored Procedures
+
+Database stored procedures are available at: [sdev-db/bin/sql](https://github.com/kurtekat/shaiya-episode-6/tree/main/sdev-db/bin/sql)
+
+These procedures include:
+- Character list data retrieval with equipment
+- Name availability checking
+- Item Mall integration procedures
+
+<Note>
+These stored procedures are original code. If you receive an error during installation, change `ALTER` to `CREATE` and try again.
+</Note>
+
+## Binary
+
+The binary has been patched to fix a critical bug that causes item mall purchase duplicates.
+
+### Bug Fix: Item Mall Purchase Duplicates
+
+The original code contained an error that would set a value to `1` instead of `0`, causing duplicate purchases:
+
+<CodeGroup>
+```asm Bug (Original)
+00407942  mov dword ptr [ebx+8],1
+```
+
+```asm Fixed
+00407942  mov dword ptr [ebx+8],0
+```
+</CodeGroup>
+
+<Warning>
+Using the original unpatched binary may result in duplicate item purchases in the Item Mall. Always use the patched version from the repository.
+</Warning>
+
+## Integration
+
+The `sdev-db` library works in conjunction with the `sdev` game service library. Ensure that:
+
+1. The patched binary is deployed to your dbAgent service directory
+2. All stored procedures are installed in the appropriate databases
+3. The dbAgent service has proper database connectivity configured
+
+## Related Components
+
+<CardGroup cols={2}>
+  <Card title="sdev" icon="gamepad" href="/server/sdev">
+    Game service library with Item Mall, Battlefield Move, and more
+  </Card>
+  
+  <Card title="sdev-login" icon="right-to-bracket" href="/server/sdev-login">
+    Login service library with vulnerability patches
+  </Card>
+</CardGroup>

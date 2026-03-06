@@ -1,0 +1,308 @@
+---
+title: "Perfect Lapisian"
+description: "Create lapisians with guaranteed 100% success rates using perfect crafting materials"
+---
+
+## Overview
+
+Perfect Lapisians allow players to enchant equipment with a guaranteed success rate when using special materials. Unlike standard lapisian enchantments that have varying success rates, Perfect Lapisians define a `ReqRec` value of 10000, ensuring 100% success.
+
+<Note>
+Vanilla items already define perfect success rates (ReqRec = 10000). If ReqRec is zero, the game service falls back to `g_LapisianEnchantSuccessRate` configuration.
+</Note>
+
+## Success Rate Calculation
+
+The game calculates perfect lapisian success rates using the following formula:
+
+```cpp
+auto materialCount = 10;
+auto reqRec = 10000;  // Perfect success rate
+
+auto rate = reqRec * 100;  // 1000000
+rate += materialCount;      // 1000010
+```
+
+When `ReqRec = 10000`, the success rate is effectively 100%.
+
+## Configuration
+
+Perfect Lapisians are configured in the Items database with specific column values:
+
+### Item Configuration Parameters
+
+<ParamField path="Level" type="0:1" required>
+  **Can use with Weapons**
+  - `0` = Cannot be used on weapons
+  - `1` = Can be used on weapons
+</ParamField>
+
+<ParamField path="Country" type="0:1" required>
+  **Can use with Helmets**
+  - `0` = Cannot be used on helmets
+  - `1` = Can be used on helmets
+</ParamField>
+
+<ParamField path="AttackFighter" type="0:1" required>
+  **Can use with Upper Armor**
+  - `0` = Cannot be used on chest armor
+  - `1` = Can be used on chest armor
+</ParamField>
+
+<ParamField path="DefenseFighter" type="0:1" required>
+  **Can use with Lower Armor**
+  - `0` = Cannot be used on pants
+  - `1` = Can be used on pants
+</ParamField>
+
+<ParamField path="PatrolRogue" type="0:1" required>
+  **Can use with Shields**
+  - `0` = Cannot be used on shields
+  - `1` = Can be used on shields
+</ParamField>
+
+<ParamField path="ShootRogue" type="0:1" required>
+  **Can use with Gloves**
+  - `0` = Cannot be used on gloves
+  - `1` = Can be used on gloves
+</ParamField>
+
+<ParamField path="AttackMage" type="0:1" required>
+  **Can use with Boots**
+  - `0` = Cannot be used on boots
+  - `1` = Can be used on boots
+</ParamField>
+
+<ParamField path="ReqRec" type="0:10000" required>
+  **Success Rate**
+  - `0` = Use default rate from `g_LapisianEnchantSuccessRate`
+  - `10000` = Perfect success rate (100%)
+  - Values between 1-9999 = Partial success rates
+</ParamField>
+
+<ParamField path="Range" type="0:19" required>
+  **Minimum Item Enchant Step**
+  
+  Defines the minimum enchantment level (+0 to +19) required on the target item.
+</ParamField>
+
+<ParamField path="AttackTime" type="1:20" required>
+  **Maximum Enchant Step**
+  
+  Defines the maximum enchantment level (+1 to +20) this lapisian can be used up to.
+</ParamField>
+
+<ParamField path="ReqVg" type="0:1" required>
+  **Needs Item Protection**
+  - `0` = No protection required
+  - `1` = Requires item protection scroll
+</ParamField>
+
+## Configuration Table
+
+| Column         | Value    | Description               |
+|----------------|----------|---------------------------|
+| Level          | 0:1      | Can use with Weapons      |
+| Country        | 0:1      | Can use with Helmets      |
+| AttackFighter  | 0:1      | Can use with Upper Armor  |
+| DefenseFighter | 0:1      | Can use with Lower Armor  |
+| PatrolRogue    | 0:1      | Can use with Shields      |
+| ShootRogue     | 0:1      | Can use with Gloves       |
+| AttackMage     | 0:1      | Can use with Boots        |
+| ReqRec         | 0:10000  | Success rate              |
+| Range          | 0:19     | Minimum item enchant step |
+| AttackTime     | 1:20     | Maximum step              |
+| ReqVg          | 0:1      | Needs item protection     |
+
+## Creating Perfect Lapisians
+
+<Steps>
+  <Step title="Design Lapisian Stats">
+    Determine the stat bonuses your perfect lapisian will provide (STR, DEX, INT, WIS, LUC, HP, MP, etc.).
+  </Step>
+  
+  <Step title="Configure Database Entry">
+    Create or modify an item in the Items table with:
+    - `Type` = 30 (Lapisian)
+    - `ReqRec` = 10000 (Perfect success rate)
+    - Equipment compatibility flags (Level, Country, AttackFighter, etc.)
+    - Enchant range (Range and AttackTime)
+  </Step>
+  
+  <Step title="Set Equipment Restrictions">
+    Configure which equipment types can use this lapisian:
+    
+    ```sql
+    UPDATE Items SET
+      Level = 1,           -- Weapons
+      Country = 1,         -- Helmets
+      AttackFighter = 1,   -- Upper Armor
+      DefenseFighter = 1,  -- Lower Armor
+      PatrolRogue = 1,     -- Shields
+      ShootRogue = 1,      -- Gloves
+      AttackMage = 1       -- Boots
+    WHERE ItemID = YOUR_LAPISIAN_ID
+    ```
+  </Step>
+  
+  <Step title="Set Enchant Ranges">
+    Define the enchantment level range:
+    
+    ```sql
+    UPDATE Items SET
+      Range = 0,        -- Can use from +0
+      AttackTime = 20   -- Can use up to +20
+    WHERE ItemID = YOUR_LAPISIAN_ID
+    ```
+  </Step>
+  
+  <Step title="Set Perfect Rate">
+    Ensure the success rate is perfect:
+    
+    ```sql
+    UPDATE Items SET
+      ReqRec = 10000
+    WHERE ItemID = YOUR_LAPISIAN_ID
+    ```
+  </Step>
+</Steps>
+
+## Example: Universal Perfect Lapisian
+
+Here's an example SQL configuration for a universal perfect lapisian that can be used on all equipment types:
+
+```sql
+INSERT INTO Items (
+  ItemID, ItemName, Type, TypeID,
+  Level, Country, AttackFighter, DefenseFighter,
+  PatrolRogue, ShootRogue, AttackMage,
+  ReqRec, Range, AttackTime, ReqVg
+) VALUES (
+  999999,                -- Unique Item ID
+  'Perfect Lapisian',    -- Item Name
+  30,                    -- Type: Lapisian
+  100,                   -- TypeID
+  1,                     -- Can use on Weapons
+  1,                     -- Can use on Helmets
+  1,                     -- Can use on Upper Armor
+  1,                     -- Can use on Lower Armor
+  1,                     -- Can use on Shields
+  1,                     -- Can use on Gloves
+  1,                     -- Can use on Boots
+  10000,                 -- Perfect Success Rate
+  0,                     -- Minimum enchant: +0
+  20,                    -- Maximum enchant: +20
+  0                      -- No protection required
+)
+```
+
+## Fallback to Default Rates
+
+If `ReqRec` is set to 0, the game service uses the default configuration:
+
+```cpp
+if (item.ReqRec == 0)
+{
+    rate = g_LapisianEnchantSuccessRate.GetRate(enchantLevel);
+}
+else
+{
+    rate = item.ReqRec * 100;
+    rate += materialCount;
+}
+```
+
+<Warning>
+Setting ReqRec to 0 means the lapisian will use standard success rates, which decrease as enchantment levels increase. Only use ReqRec = 10000 for guaranteed perfect enchantments.
+</Warning>
+
+## Best Practices
+
+1. **Equipment Restrictions**: Set appropriate equipment type flags to prevent lapisians from being used on incompatible items
+2. **Enchant Ranges**: Use `Range` and `AttackTime` to restrict lapisians to specific enchantment tiers
+3. **Protection Requirements**: Set `ReqVg = 1` for high-value lapisians to require protection scrolls
+4. **Balance Considerations**: Perfect lapisians are powerful - balance their availability and cost accordingly
+5. **Testing**: Always test new perfect lapisians on non-production servers first
+
+## Common Configurations
+
+<Accordion title="Weapon-Only Perfect Lapisian">
+  ```sql
+  UPDATE Items SET
+    Level = 1,           -- Weapons only
+    Country = 0,
+    AttackFighter = 0,
+    DefenseFighter = 0,
+    PatrolRogue = 0,
+    ShootRogue = 0,
+    AttackMage = 0,
+    ReqRec = 10000,
+    Range = 0,
+    AttackTime = 20
+  WHERE ItemID = YOUR_ITEM_ID
+  ```
+</Accordion>
+
+<Accordion title="Armor-Only Perfect Lapisian">
+  ```sql
+  UPDATE Items SET
+    Level = 0,
+    Country = 1,         -- Helmets
+    AttackFighter = 1,   -- Upper Armor
+    DefenseFighter = 1,  -- Lower Armor
+    PatrolRogue = 1,     -- Shields
+    ShootRogue = 1,      -- Gloves
+    AttackMage = 1,      -- Boots
+    ReqRec = 10000,
+    Range = 0,
+    AttackTime = 20
+  WHERE ItemID = YOUR_ITEM_ID
+  ```
+</Accordion>
+
+<Accordion title="High-Level Only Perfect Lapisian">
+  ```sql
+  UPDATE Items SET
+    Level = 1,
+    Country = 1,
+    AttackFighter = 1,
+    DefenseFighter = 1,
+    PatrolRogue = 1,
+    ShootRogue = 1,
+    AttackMage = 1,
+    ReqRec = 10000,
+    Range = 15,          -- Only for items +15 and above
+    AttackTime = 20
+  WHERE ItemID = YOUR_ITEM_ID
+  ```
+</Accordion>
+
+## Troubleshooting
+
+<Accordion title="Lapisian Shows Less Than 100% Success Rate">
+  - Verify `ReqRec = 10000` in the database
+  - Check that the item is properly configured as Type = 30
+  - Ensure the server has reloaded the item database
+  - Verify the target item's enchantment level is within Range and AttackTime
+</Accordion>
+
+<Accordion title="Cannot Use Lapisian on Equipment">
+  - Check the equipment type flags (Level, Country, AttackFighter, etc.)
+  - Verify the target item's enchantment level is greater than or equal to Range
+  - Verify the target item's enchantment level is less than or equal to AttackTime
+  - Ensure the item has available lapisian slots
+</Accordion>
+
+<Accordion title="Success Rate Is Not Perfect">
+  If ReqRec = 10000 but success isn't guaranteed:
+  - Check for server-side modifications to the rate calculation
+  - Verify no debuffs or penalties are affecting the enchantment
+  - Review server logs for calculation errors
+  - Test with vanilla items to confirm the system works correctly
+</Accordion>
+
+## Related Features
+
+- [Lapisian Remake](/features/lapisian-remake) - Combine lapisians to create better ones
+- [Item Ability Move](/features/item-ability-move) - Transfer lapisians between items
+- [Synergy](/features/synergy) - Enhance set items with perfect lapisians

@@ -1,0 +1,271 @@
+---
+title: "sdev"
+description: "Game service library for Shaiya Episode 6 with Item Mall, Battlefield Move, Reward Item, and more"
+---
+
+## Overview
+
+The `sdev` library is the game service component for Shaiya Episode 6. It implements all features based on client specifications with the goal of keeping everything as vanilla as possible.
+
+## Environment
+
+- **Platform**: Windows 10
+- **IDE**: Visual Studio 2019
+- **Language**: C++ 20
+- **Prerequisites**: [Microsoft Visual C++ Redistributable](https://aka.ms/vs/17/release/vc_redist.x86.exe)
+
+## Binaries
+
+Binary files are available at: [sdev/bin](https://github.com/kurtekat/shaiya-episode-6/tree/main/sdev/bin/)
+
+| NpcQuest | Max Level |
+|----------|----------|
+| EP6      | 80       |
+
+### Changelog Highlights
+
+<AccordionGroup>
+  <Accordion title="02-25-2026: Quest Structure Update">
+    Updated quest structure sizes to correct values:
+    
+    | Type        | EP5   | EP6   |
+    |-------------|-------|-------|
+    | QuestInfo   | 0x1D0 | 0x260 |
+    | QuestResult | 0x20  | 0x28  |
+  </Accordion>
+  
+  <Accordion title="01-19-2026: Item Sets Support">
+    Removed instruction that overwrites `ItemInfo.Drop` to support synergy/item sets functionality.
+  </Accordion>
+  
+  <Accordion title="04-02-2024: Level 80 Support">
+    Added level 80 support and changed exp location to prevent overlap with additional status values.
+  </Accordion>
+</AccordionGroup>
+
+## Configuration
+
+Configuration files are located at: [sdev/bin/data](https://github.com/kurtekat/shaiya-episode-6/tree/main/sdev/bin/data/)
+
+The library expects the following configuration files in the `PSM_Client/Bin/Data` directory:
+
+- `BattleFieldMoveInfo.ini` - Battlefield zone movement
+- `OnlineTimePrize.ini` - Reward item system
+- `ChaoticSquare.ini` - Chaotic Squares crafting
+- `SetItem.ini` - Synergy/item sets
+- `Map.ini` - Town move scroll settings
+
+## Major Features
+
+<CardGroup cols={2}>
+  <Card title="Item Mall" icon="shop">
+    Purchase and gift point items with included stored procedures for UsersMaster integration.
+  </Card>
+  
+  <Card title="Battlefield Move" icon="location-arrow">
+    Instant zone movement with level range validation and debuff prevention.
+  </Card>
+  
+  <Card title="Reward Item" icon="gift">
+    Account-wide online time rewards with 20 item units and progress tracking.
+  </Card>
+  
+  <Card title="Rune Combination" icon="gem">
+    Support for vials (Effects 93-98) and recreation runes with configurable enable flags.
+  </Card>
+  
+  <Card title="Skill Abilities" icon="wand-magic-sparkles">
+    Episode 6 abilities 70, 87, and 35 including exp stones and buff effects.
+  </Card>
+  
+  <Card title="Chaotic Squares" icon="square">
+    Crafting system with Fortune Money and Crafting Hammers with success rate modifiers.
+  </Card>
+  
+  <Card title="Synergy" icon="link">
+    Item set bonuses using the Drop field for set IDs with vanilla configuration support.
+  </Card>
+  
+  <Card title="Item Ability Move" icon="arrows-left-right">
+    Transfer CraftName and Gems between items with configurable success rates (30-90%).
+  </Card>
+</CardGroup>
+
+## Item Repair
+
+Client endurance values will not match server endurance in real-time. Players must relog to see correct repair costs.
+
+### Episode 5
+```cpp
+RepairCost = (Item.Buy / 30.0) * (Damage / 400.0)
+```
+
+### Episode 6.4
+```cpp
+RepairCost = (Item.Buy / 15.0) * (Damage / 400.0)
+```
+
+## NpcQuest
+
+The Episode 6 format supports 6 quest results, each containing up to 3 items. The `ps_game` binary has been modified to read this file format.
+
+<Note>
+See the changelog in the bin directory for detailed quest structure information.
+</Note>
+
+## Revenge Mark
+
+The library tracks kill counts up to 999 and renders different effects based on the count:
+
+| KillCount | EffectName                | EffectDataId |
+|-----------|---------------------------|-------------|
+| 1         | RevengeMark_Loop_01.EFT   | 265         |     
+| 2         | RevengeMark_Loop_02.EFT   | 266         |
+| 3         | RevengeMark_Loop_03.EFT   | 267         |
+| 4         | RevengeMark_Loop_04.EFT   | 268         |
+| 5         | RevengeMark_Loop_05.EFT   | 269         |
+| 6         | RevengeMark_Loop_06.EFT   | 270         |
+| 7         | RevengeMark_Loop_07.EFT   | 271         |
+| 8-999     | RevengeMark_Loop_08.EFT   | 272         |
+| odd       | RevengeMark_Notice_01.EFT | 262         |
+| even      | RevengeMark_Notice_02.EFT | 263         |
+| 999       | RevengeMark_Notice_03.EFT | 264         |
+
+### System Messages
+
+```
+508  "Your revenge to <t> has succeeded!"
+509  "<t> killed you <v> time(s)."
+```
+
+## Skill Abilities
+
+The library adds support for Episode 6 skill abilities:
+
+### Ability 35 (Exp Stones)
+
+Modifies `CUser::AddExpFromUser` to support 6.4 ability values:
+
+| ItemId | SkillId | SkillLv | AbilityValue |
+|--------|---------|---------|-------------|
+| 100042 | 222     | 1       | 150         |
+| 100043 | 223     | 1       | 150         |
+| 101114 | 426     | 2       | 500         |
+| 101115 | 426     | 3       | 1000        |
+
+<Note>
+Ability values are expected to be greater than 100. The library divides the value by 100.
+</Note>
+
+### Ability 70
+
+Effects are removed a few seconds after the skill is stopped.
+
+### Ability 87
+
+Starter items:
+
+| ItemId | SkillId | SkillLv |
+|--------|---------|--------|
+| 101112 | 432     | 2      |
+| 101113 | 432     | 3      |
+
+## Perfect Lapisian
+
+Vanilla items define a perfect success rate (10000):
+
+```cpp
+auto materialCount = 10;
+auto reqRec = 10000;
+
+auto rate = reqRec * 100; // 1000000
+rate += materialCount;    // 1000010
+```
+
+### Configuration
+
+| Column         | Value    | Description               |
+|----------------|----------|---------------------------|
+| Level          | 0:1      | Can use with Weapons      |
+| Country        | 0:1      | Can use with Helmets      |
+| AttackFighter  | 0:1      | Can use with Upper Armor  |
+| DefenseFighter | 0:1      | Can use with Lower Armor  |
+| PatrolRogue    | 0:1      | Can use with Shields      |
+| ShootRogue     | 0:1      | Can use with Gloves       |
+| AttackMage     | 0:1      | Can use with Boots        |
+| ReqRec         | 0:10000  | Success rate              |
+| Range          | 0:19     | Minimum item enchant step |
+| AttackTime     | 1:20     | Maximum step              |
+| ReqVg          | 0:1      | Needs item protection     |
+
+## Lapisian Remake
+
+Use item `101101` to activate the window. The `ReqLuc` value determines the number of lapisians required for combination.
+
+<Warning>
+See system message 510 for more information about lapisian remake functionality.
+</Warning>
+
+## Town Move Scrolls
+
+The library reads `TownMoveScroll` keys from `Map.ini` to enable/disable item effects:
+
+```ini
+[SET_ZONE_0]
+MapType          = F
+WeatherState     = 0
+TownMoveScroll   = 0
+```
+
+Movement is instant like the official server. Certain debuffs prevent movement. The `ReqVg` value is the NPC identifier:
+
+| ItemId | Effect | ReqVg (NPC ID) |
+|--------|--------|----------------|
+| 101102 | 104    | 111            |
+| 101103 | 104    | 112            |
+| 101104 | 104    | 101            |
+| 101105 | 104    | 102            |
+
+## Cooldowns
+
+1000 ticks = ~1 second
+
+### Item Cooldowns
+
+| ReqIg | Ticks   |
+|-------|--------|
+| 0     | 0      |
+| 1     | 15000  |
+| 2     | 20000  |
+| 3     | 25000  |
+| 4     | 30000  |
+| 5     | 60000  |
+| 10    | 600000 |
+
+### Monster Cooldowns
+
+| AttackSpecial3 | Ticks     |
+|----------------|----------|
+| 0              | 5000     |
+| 1              | 30000    |
+| 2              | 60000    |
+| 3              | 180000   |
+| 4              | 300000   |
+| 14             | 604800000|
+
+## Stored Procedures
+
+Database stored procedures are available at: [sdev-db/bin/sql](https://github.com/kurtekat/shaiya-episode-6/tree/main/sdev-db/bin/sql)
+
+### Item Mall Procedures
+
+```sql
+[dbo].[usp_Read_User_CashPoint_UsersMaster]
+[dbo].[usp_Save_User_BuyPointItems2]
+[dbo].[usp_Save_User_GiftPointItems2]
+[dbo].[usp_Update_UserPoint]
+```
+
+<Note>
+If you receive an error during installation, change `ALTER` to `CREATE` and try again.
+</Note>

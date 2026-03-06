@@ -1,0 +1,106 @@
+---
+title: "shaiya"
+description: "Common types and packet definitions for Shaiya Episode 6"
+---
+
+The `shaiya` library is a foundational library that contains common types and packet definitions used throughout the Shaiya Episode 6 project. This library serves as a dependency for other projects in the codebase.
+
+## Environment Requirements
+
+- **OS**: Windows 10
+- **IDE**: Visual Studio 2019
+- **Language**: C++ 20
+
+## Prerequisites
+
+- [Microsoft Visual C++ Redistributable](https://aka.ms/vs/17/release/vc_redist.x86.exe)
+
+## Overview
+
+<Note>
+The `shaiya` library is a dependency for all other projects in the Episode 6 codebase. It provides shared data structures and packet definitions that ensure consistency across client and server implementations.
+</Note>
+
+## DateTime Encoding
+
+The library implements Shaiya's custom date/time encoding system.
+
+### Data Type
+
+The encoded date/time value is stored as an **unsigned 32-bit integer**.
+
+### Valid Range
+
+<CodeGroup>
+
+```plaintext Minimum
+2000-01-01 00:00:00
+Encoded value: 4325376
+```
+
+```plaintext Maximum
+2063-12-31 23:59:59
+Encoded value: 4282351355
+```
+
+</CodeGroup>
+
+<Warning>
+Date/time values outside this range (2000-2063) are not supported by the encoding format.
+</Warning>
+
+### Usage Example
+
+```cpp
+// DateTime is encoded as uint32_t
+uint32_t encodedTime = 4325376;  // 2000-01-01 00:00:00
+
+// The library provides functions to encode/decode these values
+// between DateTime objects and uint32_t representations
+```
+
+## Packet Definitions
+
+The library contains definitions for all network packets used in Shaiya Episode 6 communication between client and server.
+
+<Accordion title="Common Packet Types">
+- Character data packets
+- Inventory packets
+- Chat packets
+- Movement packets
+- Combat packets
+- Trade packets
+- Guild packets
+</Accordion>
+
+## Type Definitions
+
+The library provides common type definitions used throughout the Episode 6 codebase, ensuring type safety and consistency.
+
+## References
+
+<Note>
+The DateTime encoding implementation references [Eden's ShaiyaTime](https://github.com/tristonplummer/Eden/blob/master/eden/common/include/shaiya/common/datatypes/ShaiyaTime.hpp) implementation.
+</Note>
+
+## Dependencies
+
+Other Episode 6 projects that depend on this library:
+
+- `sdev` - Server development library
+- `sdev-client` - Client modification library
+- `sdev-db` - Database library
+- `sdev-map` - Map server library
+
+## Integration
+
+When building projects that depend on the `shaiya` library, ensure that:
+
+1. The library is built first in your build order
+2. Include paths are properly configured
+3. The appropriate library file is linked
+
+```cpp
+#include <shaiya/include/packet.h>
+#include <shaiya/include/common.h>
+```

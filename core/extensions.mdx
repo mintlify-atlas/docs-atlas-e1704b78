@@ -1,0 +1,295 @@
+---
+title: "extensions"
+description: "C++ standard library extensions and utility functions"
+---
+
+The `extensions` library provides modern C++ utility extensions that enhance the standard library with additional functionality. This header-only library includes custom concepts, filesystem utilities, functional programming tools, string manipulation functions, and type traits.
+
+## Overview
+
+<Note>
+The `extensions` library is header-only. Simply include the required headers to use the functionality.
+</Note>
+
+The library is organized into five main headers:
+
+- `concepts.hpp` - Custom C++ concepts
+- `filesystem.hpp` - Filesystem path utilities
+- `functional.hpp` - Functional programming helpers
+- `string.hpp` - String manipulation utilities
+- `type_traits.hpp` - Extended type traits
+
+## concepts.hpp
+
+Provides custom C++ 20 concepts for type constraints.
+
+### scoped_enum Concept
+
+```cpp
+#include <extensions/include/concepts.hpp>
+
+namespace ext {
+    template<class T>
+    concept scoped_enum = ext::is_scoped_enum_v<T>;
+}
+```
+
+**Usage Example:**
+
+```cpp
+enum class Color { Red, Green, Blue };
+enum OldStyle { Value1, Value2 };
+
+template<ext::scoped_enum T>
+void process(T value) {
+    // Only accepts scoped enums (enum class)
+}
+
+process(Color::Red);      // ✓ Valid
+process(OldStyle::Value1); // ✗ Compile error
+```
+
+## filesystem.hpp
+
+Extends `std::filesystem` with convenient path manipulation utilities.
+
+### Path Combining
+
+```cpp
+#include <extensions/include/filesystem.hpp>
+
+namespace ext::filesystem::path {
+    template<class...Args>
+    void combine(std::filesystem::path& base, const Args&...args);
+}
+```
+
+**Usage Example:**
+
+```cpp
+std::filesystem::path basePath = "C:/Game";
+ext::filesystem::path::combine(basePath, "data", "maps", "map001.sah");
+// Result: C:/Game/data/maps/map001.sah
+```
+
+<Note>
+The `combine` function accepts variadic arguments, allowing you to combine multiple path segments in a single call.
+</Note>
+
+## functional.hpp
+
+Provides functional programming utilities for common operations.
+
+### unary_equal_to
+
+```cpp
+#include <extensions/include/functional.hpp>
+
+namespace ext {
+    template<class T>
+    struct unary_equal_to;
+}
+```
+
+**Usage Example:**
+
+```cpp
+#include <algorithm>
+#include <vector>
+
+std::vector<int> numbers = {1, 2, 3, 4, 5};
+
+// Find first occurrence of 3
+auto it = std::find_if(numbers.begin(), numbers.end(), 
+                       ext::unary_equal_to<int>(3));
+
+if (it != numbers.end()) {
+    // Found value 3
+}
+```
+
+## string.hpp
+
+Comprehensive string manipulation utilities inspired by Boost.Algorithm.
+
+### Trimming Functions
+
+<CodeGroup>
+
+```cpp ltrim
+// Trim from left (start)
+ext::string::ltrim(str);           // Trim whitespace
+ext::string::ltrim(str, 'x');      // Trim specific character
+ext::string::ltrim(str, "xyz");    // Trim any of these characters
+```
+
+```cpp rtrim
+// Trim from right (end)
+ext::string::rtrim(str);           // Trim whitespace
+ext::string::rtrim(str, 'x');      // Trim specific character
+ext::string::rtrim(str, "xyz");    // Trim any of these characters
+```
+
+```cpp trim
+// Trim from both sides
+ext::string::trim(str);            // Trim whitespace
+ext::string::trim(str, 'x');       // Trim specific character
+ext::string::trim(str, "xyz");     // Trim any of these characters
+```
+
+</CodeGroup>
+
+### Copy Variants
+
+<Note>
+All trim functions have `_copy` variants that return a new string instead of modifying in-place.
+</Note>
+
+```cpp
+std::string original = "  hello  ";
+auto trimmed = ext::string::trim_copy(original);
+// original: "  hello  " (unchanged)
+// trimmed: "hello"
+```
+
+### String Splitting
+
+```cpp
+#include <extensions/include/string.hpp>
+
+std::string data = "apple,banana,orange";
+
+// Split by character
+auto parts = ext::string::split(data, ',');
+// Result: {"apple", "banana", "orange"}
+
+// Split with maximum count
+auto limited = ext::string::split(data, ',', 2);
+// Result: {"apple", "banana"}
+
+// Split by string
+std::string path = "C:\\Game\\data\\maps";
+auto dirs = ext::string::split(path, "\\");
+```
+
+### Type Conversion
+
+<Accordion title="String Conversion Utilities">
+
+```cpp
+// String to integer
+ext::string::to_int converter(10); // base 10
+int value = converter("42");
+
+// Hex conversion
+ext::string::to_int hexConverter(16);
+int hexValue = hexConverter("FF");
+
+// String to wide string
+std::string narrow = "Hello";
+std::wstring wide = ext::string::to_wstring(narrow);
+```
+
+</Accordion>
+
+### Predicate-Based Operations
+
+```cpp
+// Custom trimming with predicates
+ext::string::trim_if(str, [](char c) {
+    return c == ' ' || c == '\t';
+});
+
+// Locale-aware trimming
+std::locale loc("en_US.UTF-8");
+ext::string::trim(str, loc);
+```
+
+## type_traits.hpp
+
+Extended type trait utilities based on Microsoft's implementation.
+
+### is_scoped_enum
+
+```cpp
+#include <extensions/include/type_traits.hpp>
+
+namespace ext {
+    template<class T>
+    constexpr bool is_scoped_enum_v;
+    
+    template<class T>
+    struct is_scoped_enum;
+}
+```
+
+**Usage Example:**
+
+```cpp
+enum class Status { Active, Inactive };
+enum OldEnum { Val1, Val2 };
+
+static_assert(ext::is_scoped_enum_v<Status>);    // true
+static_assert(!ext::is_scoped_enum_v<OldEnum>);  // true
+static_assert(!ext::is_scoped_enum_v<int>);      // true
+```
+
+<Note>
+The `is_scoped_enum` trait checks if a type is a scoped enumeration (enum class) by verifying it's an enum but not implicitly convertible to int.
+</Note>
+
+## Integration
+
+### Including Headers
+
+```cpp
+// Include specific functionality
+#include <extensions/include/string.hpp>
+#include <extensions/include/filesystem.hpp>
+
+// Or include all headers
+#include <extensions/include/concepts.hpp>
+#include <extensions/include/filesystem.hpp>
+#include <extensions/include/functional.hpp>
+#include <extensions/include/string.hpp>
+#include <extensions/include/type_traits.hpp>
+```
+
+### Namespace Usage
+
+All functionality is within the `ext` namespace:
+
+```cpp
+using namespace ext::string;
+
+std::string text = "  hello  ";
+trim(text);
+auto parts = split(text, ' ');
+```
+
+## Best Practices
+
+<Warning>
+When using string manipulation functions, be aware of the performance characteristics:
+- In-place functions (`trim`, `ltrim`, `rtrim`) modify the original string
+- Copy functions (`trim_copy`, etc.) create new strings
+- Use in-place functions when the original is no longer needed
+</Warning>
+
+### Performance Tips
+
+```cpp
+// Prefer in-place when possible
+std::string text = getUserInput();
+ext::string::trim(text);  // Modifies in-place
+
+// Use copy when original is needed
+const std::string original = getData();
+auto cleaned = ext::string::trim_copy(original);  // Original unchanged
+```
+
+## Credits
+
+- **string.hpp** - Inspired by Boost.Algorithm library
+- **type_traits.hpp** - Based on Microsoft's implementation
+- **String conversion** - Credits to DUB1401 (GitHub)

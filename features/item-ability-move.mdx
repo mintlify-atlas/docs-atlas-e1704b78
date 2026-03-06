@@ -1,0 +1,199 @@
+---
+title: "Item Ability Move"
+description: "Transfer CraftName and Gems from one item to another with configurable success rates"
+---
+
+## Overview
+
+The Item Ability Move system allows players to transfer the `CraftName` and `Gems` (lapisian enchantments) from one item to another. This feature is particularly useful for preserving valuable enchantments when upgrading equipment.
+
+<Note>
+If the transfer is successful, the CraftName and Gems will be **permanently removed** from the original item and applied to the target item.
+</Note>
+
+## Activation Item
+
+Use the following item to activate the Item Ability Move window:
+
+| ItemID | ItemEffect | Description |
+|--------|------------|-------------|
+| 101150 | 105        | Ability Transfer Scroll |
+
+## Success Rates
+
+### Base Success Rate
+
+The base chance of success for ability transfer is **30%**.
+
+### Enhancement Items
+
+Use protection items to increase the success rate:
+
+| ItemID | ItemEffect | ReqVg | Success Rate | Increase |
+|--------|------------|-------|--------------|----------|
+| 101156 | 106        | 20    | 50%          | +20%     |
+| 101157 | 106        | 50    | 80%          | +50%     |
+| 101158 | 106        | 60    | 90%          | +60%     |
+
+<Warning>
+The `ReqVg` value determines the added success rate. Higher ReqVg values provide better chances of successful transfer.
+</Warning>
+
+## How It Works
+
+<Steps>
+  <Step title="Acquire Transfer Scroll">
+    Obtain Item 101150 (Ability Transfer Scroll) from the item mall or in-game sources.
+  </Step>
+  
+  <Step title="Open Transfer Window">
+    Use the scroll to open the Item Ability Move interface.
+  </Step>
+  
+  <Step title="Select Source Item">
+    Place the item with the CraftName/Gems you want to transfer in the source slot.
+  </Step>
+  
+  <Step title="Select Target Item">
+    Place the item you want to receive the abilities in the target slot.
+  </Step>
+  
+  <Step title="Add Enhancement (Optional)">
+    Place an enhancement item (101156, 101157, or 101158) to increase success rate.
+  </Step>
+  
+  <Step title="Confirm Transfer">
+    Click confirm to attempt the transfer. The outcome is determined by the success rate.
+  </Step>
+</Steps>
+
+## Transfer Rules
+
+<Accordion title="What Gets Transferred?">
+  The following attributes are transferred from the source item to the target item:
+  
+  - **CraftName**: The custom name/enchantment on the item
+  - **Gems**: All lapisian slots and their enchantments (up to 6 slots)
+  
+  Base item stats, enchantment levels (+1, +2, etc.), and other properties remain unchanged.
+</Accordion>
+
+<Accordion title="What Happens on Failure?">
+  - Without protection: Source item loses CraftName and Gems (destroyed)
+  - With protection item: Varies based on protection type (check item description)
+  - Target item is never affected
+  - Transfer scroll is consumed regardless of outcome
+</Accordion>
+
+## Configuration
+
+### Item Effect Values
+
+<ParamField path="ItemEffect" type="integer" required>
+  The effect ID that determines the item's function:
+  - **105**: Activation scroll (opens transfer window)
+  - **106**: Protection/enhancement item (increases success rate)
+</ParamField>
+
+<ParamField path="ReqVg" type="integer" default="0">
+  For effect 106 items, this value determines the added success rate:
+  - **20**: +20% success rate (total: 50%)
+  - **50**: +50% success rate (total: 80%)
+  - **60**: +60% success rate (total: 90%)
+</ParamField>
+
+## Client Compatibility
+
+| Locale | Patch | Supported          | Notes |
+|--------|-------|--------------------|---------|
+| ES     | 171   | ✅ | Fully functional |
+| PT     | 182   | ❌ | Not compatible   |
+| PT     | 189   | ❌ | Not compatible   |
+
+<Warning>
+This feature is only available in ES 171 client. Portuguese clients (PT 182, PT 189) do not support the Item Ability Move system.
+</Warning>
+
+## Example Usage
+
+### Scenario: Transferring Perfect Lapisians
+
+You have:
+- **Old Weapon**: Level 70 sword with 6 perfect lapisians and CraftName "Destroyer"
+- **New Weapon**: Level 80 sword with no enchantments
+- **Goal**: Move the lapisians and name to the new weapon
+
+<Steps>
+  <Step title="Prepare Items">
+    Ensure both weapons are in your inventory along with Item 101150.
+  </Step>
+  
+  <Step title="Use Enhancement">
+    Add Item 101158 (90% success rate) to maximize chances.
+  </Step>
+  
+  <Step title="Execute Transfer">
+    Confirm the transfer. With 90% success rate, you have a high chance of success.
+  </Step>
+  
+  <Step title="Result">
+    On success: New weapon has "Destroyer" name and all 6 lapisians. Old weapon becomes a basic sword.
+  </Step>
+</Steps>
+
+## Success Rate Calculation
+
+```cpp
+// Base success rate
+int baseRate = 30; // 30%
+
+// With enhancement item
+int enhancementBonus = item.ReqVg; // 20, 50, or 60
+
+// Final success rate
+int finalRate = baseRate + enhancementBonus;
+
+// Examples:
+// No enhancement: 30%
+// With 101156: 30% + 20% = 50%
+// With 101157: 30% + 50% = 80%
+// With 101158: 30% + 60% = 90%
+```
+
+## Best Practices
+
+1. **Always Use Protection**: The 30% base rate is risky for valuable items
+2. **Use Maximum Protection**: Item 101158 provides 90% success rate
+3. **Verify Compatibility**: Check your client version before attempting transfers
+4. **Backup Valuable Items**: Consider the risk before transferring rare enchantments
+5. **Plan Your Transfers**: Calculate the cost of protection items vs. re-enchanting
+
+## Troubleshooting
+
+<Accordion title="Transfer Window Won't Open">
+  - Verify you have Item 101150 in your inventory
+  - Check that your client version is ES 171
+  - Ensure you're not in combat or a restricted zone
+  - Try relogging and attempting again
+</Accordion>
+
+<Accordion title="Transfer Failed Despite High Success Rate">
+  - 90% success rate still means 10% chance of failure
+  - RNG can result in consecutive failures (though unlikely)
+  - Verify the protection item was properly applied
+  - Check server logs for any error messages
+</Accordion>
+
+<Accordion title="Source Item Lost Abilities But Target Didn't Receive Them">
+  This indicates a server error. Contact your administrator and provide:
+  - Timestamp of the transfer attempt
+  - Source and target item IDs
+  - Character name and server
+  - Whether protection items were used
+</Accordion>
+
+## Related Features
+
+- [Perfect Lapisian](/features/perfect-lapisian) - Create perfect lapisians to transfer
+- [Lapisian Remake](/features/lapisian-remake) - Combine lapisians before transfer
+- [Synergy](/features/synergy) - Transfer abilities within item sets

@@ -1,0 +1,198 @@
+---
+title: Battlefield Move
+description: Instant teleportation system for moving between battlefields
+---
+
+The Battlefield Move feature allows players to instantly teleport between different battlefield zones based on their level. Movement is restricted by debuffs and zone requirements.
+
+## Overview
+
+Battlefield Move provides:
+- Instant teleportation between battlefield zones
+- Level-based zone restrictions
+- Debuff-based movement prevention
+- Prevention of same-zone teleportation
+
+<Note>
+The move will be instant, like the official server. This is not a delayed teleport - players are moved immediately upon request.
+</Note>
+
+## Configuration
+
+### File Location
+
+The library expects **BattleFieldMoveInfo.ini** to be in the **PSM_Client/Bin/Data** directory.
+
+```plaintext title="Configuration File Path"
+PSM_Client/Bin/Data/BattleFieldMoveInfo.ini
+```
+
+### Configuration Requirements
+
+<Steps>
+  <Step title="Assign Unique Map Numbers">
+    Assign a unique value to each `MAP_NO` key in the configuration file.
+
+    ```ini title="Example MAP_NO Configuration"
+    [BATTLEFIELD_1]
+    MAP_NO = 1
+    MIN_LEVEL = 30
+    MAX_LEVEL = 39
+
+    [BATTLEFIELD_2]
+    MAP_NO = 2
+    MIN_LEVEL = 40
+    MAX_LEVEL = 49
+    ```
+  </Step>
+
+  <Step title="Define Level Ranges">
+    Assign a unique level range for each battlefield zone. Level ranges should not overlap.
+
+    <Warning>
+    Overlapping level ranges may cause unexpected behavior. Ensure each battlefield has a distinct level range.
+    </Warning>
+  </Step>
+
+  <Step title="Place Configuration File">
+    Place the configured `BattleFieldMoveInfo.ini` file in the `PSM_Client/Bin/Data` directory on the server.
+  </Step>
+</Steps>
+
+## Movement Restrictions
+
+### Debuff Prevention
+
+Certain debuffs will prevent battlefield movement:
+- Stun effects
+- Root/immobilize effects
+- Other movement-restricting debuffs
+
+### Zone Restrictions
+
+<ParamField path="Same Zone" type="restriction">
+  Moving to the same zone is not allowed. Players must select a different battlefield.
+</ParamField>
+
+<ParamField path="Level Requirements" type="restriction">
+  Players must meet the level requirements specified in the configuration file for each battlefield.
+</ParamField>
+
+## Client Compatibility
+
+The following table shows client compatibility for Battlefield Move:
+
+| Locale | Patch | Supported |
+|--------|-------|--------|
+| ES | 171 | ❌ |
+| PT | 182 | ❌ |
+| PT | 189 | ❌ |
+
+<Warning>
+Battlefield Move is not supported on the listed client versions. This feature requires specific client-side implementation that is not present in these patches.
+</Warning>
+
+## Configuration Examples
+
+### Basic Configuration
+
+```ini title="BattleFieldMoveInfo.ini - Basic Setup"
+[BATTLEFIELD_LOW]
+MAP_NO = 1
+MIN_LEVEL = 30
+MAX_LEVEL = 39
+
+[BATTLEFIELD_MID]
+MAP_NO = 2
+MIN_LEVEL = 40
+MAX_LEVEL = 49
+
+[BATTLEFIELD_HIGH]
+MAP_NO = 3
+MIN_LEVEL = 50
+MAX_LEVEL = 59
+
+[BATTLEFIELD_MAX]
+MAP_NO = 4
+MIN_LEVEL = 60
+MAX_LEVEL = 70
+```
+
+### Advanced Configuration
+
+```ini title="BattleFieldMoveInfo.ini - Multiple Zones"
+[BATTLEFIELD_STARTER]
+MAP_NO = 1
+MIN_LEVEL = 20
+MAX_LEVEL = 29
+
+[BATTLEFIELD_NOVICE]
+MAP_NO = 2
+MIN_LEVEL = 30
+MAX_LEVEL = 39
+
+[BATTLEFIELD_INTERMEDIATE]
+MAP_NO = 3
+MIN_LEVEL = 40
+MAX_LEVEL = 49
+
+[BATTLEFIELD_ADVANCED]
+MAP_NO = 4
+MIN_LEVEL = 50
+MAX_LEVEL = 59
+
+[BATTLEFIELD_EXPERT]
+MAP_NO = 5
+MIN_LEVEL = 60
+MAX_LEVEL = 69
+
+[BATTLEFIELD_MASTER]
+MAP_NO = 6
+MIN_LEVEL = 70
+MAX_LEVEL = 80
+```
+
+## Implementation Details
+
+### Instant Teleportation
+
+Unlike some teleport systems that have delays or casting times, Battlefield Move is instant:
+- No cast time required
+- No cooldown between uses (unless specified by items)
+- Immediate position change upon request
+
+### Server-Side Validation
+
+The server validates all movement requests:
+1. Check if player has movement-restricting debuffs
+2. Verify player meets level requirements
+3. Confirm destination is different from current zone
+4. Process instant teleportation
+
+## Troubleshooting
+
+<Accordion title="Configuration file not found">
+  Ensure `BattleFieldMoveInfo.ini` is placed in the correct directory:
+  ```
+  PSM_Client/Bin/Data/BattleFieldMoveInfo.ini
+  ```
+  The path is case-sensitive on some systems.
+</Accordion>
+
+<Accordion title="Cannot teleport despite meeting level requirements">
+  Check for active debuffs that prevent movement:
+  - Stun effects
+  - Root/immobilize effects
+  - Other crowd control effects
+  
+  Wait for debuffs to expire before attempting to teleport.
+</Accordion>
+
+<Accordion title="Same zone teleportation blocked">
+  This is intentional behavior. Select a different battlefield zone to teleport to.
+</Accordion>
+
+## Related Features
+
+- **Town Move Scrolls**: Item-based teleportation to towns
+- **Map Configuration**: General map and zone settings

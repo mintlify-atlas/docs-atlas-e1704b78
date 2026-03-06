@@ -1,0 +1,216 @@
+---
+title: Changelog
+description: Version history and technical changes for ps_game binary
+---
+
+This changelog documents technical changes and patches made to the ps_game binary for Episode 6 support.
+
+## February 25, 2026
+
+### Quest Structure Sizes Updated
+
+Updated quest structure sizes (incorrect initial values). Tested a few quests and checked object memory.
+
+| Type        | EP5   | EP6   |
+|-------------|-------|-------|
+| QuestInfo   | 0x1D0 | 0x260 |
+| QuestResult | 0x20  | 0x28  |
+
+### Assembly Changes
+
+```asm
+; 0047A5D0
+0047A5DB  IMUL EAX,EAX,260
+0047A5E1  LEA EAX,DWORD PTR DS:[EAX+ECX-260]
+
+; 0047BE40
+0047CC97  IMUL EDX,EDX,260
+0047CC9D  LEA ESI,DWORD PTR DS:[ECX+EDX-260]
+0047CE2E  IMUL EAX,EAX,260
+0047CE34  LEA ESI,DWORD PTR DS:[EAX+ECX-260]
+
+; 0048D160
+0048D179  IMUL ECX,ECX,260
+0048D17F  LEA ESI,DWORD PTR DS:[ECX+EDX-260]
+
+; 0048E050
+0048E055  CMP BYTE PTR SS:[EBP+25C],0 ; QuestInfo.Enabled
+0048E189  ADD EBP,186                 ; addressof(QuestInfo.Results[0].NextQuestID)
+0048E1AD  ADD EBP,28                  ; sizeof(QuestResult)
+0048E1B0  CMP ESI,6
+
+; 0048E230
+0048E248  IMUL EDX,EDX,260
+0048E24E  LEA ESI,DWORD PTR DS:[EDX+ESI-260]
+
+; 0048E2D0
+0048E2F7  IMUL ECX,ECX,260
+0048E2FD  LEA EBX,DWORD PTR DS:[ECX+EDX-260]
+
+; 004DF250
+004DF271  IMUL EAX,EAX,260
+004DF278  LEA EDI,DWORD PTR DS:[EAX+ECX-260]
+004DF2CC  IMUL ECX,ECX,260
+004DF2D2  LEA ECX,DWORD PTR DS:[ECX+EBP-260]
+
+; 004DF340
+004DF35C  IMUL EAX,EAX,260
+004DF369  LEA EAX,DWORD PTR DS:[EAX+EBX-260]
+004DF3B7  IMUL EAX,EAX,260
+004DF3BD  LEA EAX,DWORD PTR DS:[EAX+EBX-260]
+
+; 004DFDD0
+004E00B1  ADD EDX,260
+004E0215  ADD EDI,260
+
+; 004E04D0
+004E0522  MOV EDX,260
+004E054C  IMUL ECX,ECX,260
+004E0573  MOV BYTE PTR DS:[EDX+EDI+25C],1
+; 
+004E0C16  JMP 004DC310
+; 
+004E0C2E  ADD EBX,28  ; sizeof(QuestResult)
+004E0C31  CMP EBX,0F0 ; sizeof(QuestResult) * 6
+004E0C3D  MOV EBX,4   ; MessageCount
+004E0C72  ADD EDI,260 ; sizeof(QuestInfo)
+```
+
+## January 19, 2026
+
+### Item Sets Support (Synergy)
+
+Removed instruction that overwrites `ItemInfo.Drop` to support item sets.
+
+```asm
+; CGameData::LoadConstItem
+004DB0DA  CMP WORD PTR SS:[ESP+70],6    ; ItemInfo.Drop
+004DB0E0  JBE SHORT ps_game.004DB0E6
+004DB0E2  NOP
+004DB0E3  NOP
+004DB0E4  NOP
+004DB0E5  NOP
+```
+
+### Original Code
+
+```asm
+004DB0DA  CMP WORD PTR SS:[ESP+70],6    ; ItemInfo.Drop
+004DB0E0  JBE SHORT ps_game.004DB0E6
+004DB0E2  MOV DWORD PTR SS:[ESP+70],EBX ; 0
+```
+
+<Note>
+  This change allows vanilla item set configuration to work properly. It's unclear if this change may cause issues elsewhere.
+</Note>
+
+## November 15, 2024
+
+### Auction Board Item Type Support
+
+Changed count so item type 52 would appear at the Auction Board.
+
+```asm
+; 0056E364
+03 00 00 00 ; Count
+; 0056E368
+06 00 00 00 ; ItemType.6
+; 0056E36C
+33 00 00 00 ; ItemType.51
+; 0056E370
+34 00 00 00 ; ItemType.52
+```
+
+### Original Code
+
+```asm
+; 0056E364
+02 00 00 00 06 00 00 00 33 00 00 00 34 00 00 00
+```
+
+## April 2, 2024
+
+### Level 80 Support
+
+Added level 80 support. Changed exp location because the additional status values overlap.
+
+<Note>
+  This was a major update that modified multiple functions throughout the binary to support the increased level cap.
+</Note>
+
+### Modified Addresses
+
+The following functions were updated:
+
+```asm
+; 00460C50
+00460C55  CMP ECX,50
+00460C5A  IMUL EAX,EAX,51
+00460C6B  MOVZX EAX,WORD PTR DS:[5889E8]
+
+; 00460C80
+00460C85  CMP ECX,50
+00460C8A  IMUL EAX,EAX,51
+00460C9B  MOVZX EAX,WORD PTR DS:[5889EA]
+
+; 00460CB0
+00460CB5  CMP ECX,50
+00460CBA  IMUL EAX,EAX,51
+00460CCB  MOVZX EAX,WORD PTR DS:[5889EC]
+```
+
+### Experience Data Relocation
+
+```asm
+; 004D76E0
+004D76FE  PUSH 0B64     ; size
+004D7704  PUSH 00588808 ; original
+
+004D770E  PUSH 510      ; size
+004D7714  PUSH 0101A004
+
+; 004D8210
+004D83B2  IMUL EAX,EAX,51
+004D83D1  IMUL EAX,EAX,51
+004D83F0  IMUL EAX,EAX,51
+
+; 004D8440
+004D8543  IMUL EAX,EAX,51
+004D854E  MOV DWORD PTR DS:[EAX*4+1019EC0],EDX
+004D8569  MOV EDI,0101A008
+004D8572  MOV EDX,10
+004D859B  ADD EDI,144
+004D85A1  CMP EDI,0101A518
+```
+
+### Original Values
+
+**Level:**
+```
+0x46 -> 0x50
+```
+
+**Status:**
+```
+0x47     -> 0x51
+0x5889AC -> 0x5889E8
+0x5889AE -> 0x5889EA
+0x5889B0 -> 0x5889EC
+0x9D9    -> 0xB64
+```
+
+**Experience:**
+```
+0x47     -> 0x51
+0x589204 -> 0x101A004
+0x589208 -> 0x101A008
+0x589318 -> 0x101A140
+0x58931C -> 0x101A144
+0x461    -> 0x510
+0x5890E8 -> 0x1019EC0
+0x589678 -> 0x101A518
+```
+
+<Warning>
+  These are low-level binary patches. Do not attempt to modify these values unless you fully understand x86 assembly and the game's memory structures.
+</Warning>

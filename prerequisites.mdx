@@ -1,0 +1,114 @@
+---
+title: Prerequisites
+description: System requirements and dependencies needed to build and run Shaiya Episode 6
+---
+
+Before you begin working with Shaiya Episode 6, ensure your system meets the following requirements.
+
+## System Requirements
+
+<CardGroup cols={2}>
+  <Card title="Operating System" icon="windows">
+    Windows 10 or later
+  </Card>
+  
+  <Card title="IDE" icon="code">
+    Visual Studio 2019
+  </Card>
+  
+  <Card title="Language Standard" icon="terminal">
+    C++20
+  </Card>
+  
+  <Card title="Architecture" icon="microchip">
+    x86 (32-bit)
+  </Card>
+</CardGroup>
+
+## Required Software
+
+### Microsoft Visual C++ Redistributable
+
+The Microsoft Visual C++ Redistributable is required to run the compiled binaries.
+
+<Steps>
+  <Step title="Download the redistributable">
+    Download the [Microsoft Visual C++ Redistributable (x86)](https://aka.ms/vs/17/release/vc_redist.x86.exe)
+  </Step>
+  
+  <Step title="Install the package">
+    Run the installer and follow the installation prompts
+  </Step>
+</Steps>
+
+<Note>
+  Make sure to download the **x86 (32-bit)** version, not the x64 version.
+</Note>
+
+### DirectX SDK (Client Library Only)
+
+The DirectX SDK is required **only if you're building the client library** (`sdev-client`).
+
+<Steps>
+  <Step title="Download DirectX SDK">
+    Download the [Microsoft DirectX SDK (June 2010)](https://www.microsoft.com/en-us/download/details.aspx?id=6812)
+  </Step>
+  
+  <Step title="Install the SDK">
+    Run the installer. The installer will create a system environment variable named `DXSDK_DIR` that specifies the installation directory.
+  </Step>
+  
+  <Step title="Verify installation">
+    Verify that the `DXSDK_DIR` environment variable has been created and points to the correct installation directory.
+  </Step>
+</Steps>
+
+<Warning>
+  The DirectX SDK is **only required for the client library**. The game service (`sdev`), database library (`sdev-db`), and login library (`sdev-login`) do not need DirectX SDK.
+</Warning>
+
+## Development Tools
+
+### Visual Studio 2019
+
+Visual Studio 2019 is the recommended IDE for building the project.
+
+<Steps>
+  <Step title="Install Visual Studio 2019">
+    Download and install Visual Studio 2019 with C++ development tools
+  </Step>
+  
+  <Step title="Configure C++20 support">
+    Ensure C++20 language standard is enabled in your project settings
+  </Step>
+</Steps>
+
+### PE Bear (Optional)
+
+PE Bear is recommended for adding imports to the binaries when using the imports injection method.
+
+<Card title="PE Bear" icon="bear" href="https://github.com/hasherezade/pe-bear">
+  A portable executable (PE) file viewer and editor for analyzing and modifying binary files.
+</Card>
+
+### Cheat Engine (Optional)
+
+Cheat Engine can be used for library injection as an alternative to the imports method.
+
+<Note>
+  If using Cheat Engine for injection, **Cheat Engine 7.3 is recommended** because users have reported issues with newer versions.
+</Note>
+
+## Database Requirements
+
+### SQL Server
+
+A SQL Server instance is required for the database components.
+
+<Card title="Database Setup" icon="database">
+  The project includes stored procedures that need to be installed in your SQL Server database. See the [Installation](/installation) guide for details.
+</Card>
+
+## Next Steps
+
+Once you have all prerequisites installed, proceed to the [Installation](/installation) guide to build and configure the project.

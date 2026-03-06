@@ -1,0 +1,156 @@
+---
+title: Troubleshooting
+description: Common issues and solutions for Shaiya Episode 6
+---
+
+This page covers common issues you may encounter when running Shaiya Episode 6 and their solutions.
+
+## Common Issues
+
+<Accordion title="Data Execution Prevention (DEP) Issues">
+  <Warning>
+    Intermittent access violations have been reported on Windows Server 2022. This issue is related to [Data Execution Prevention](https://learn.microsoft.com/en-us/windows/win32/memory/data-execution-prevention).
+  </Warning>
+
+  ### Check DEP Support Policy
+
+  The following command will output the DEP support policy:
+
+  ```bash
+  wmic OS Get DataExecutionPrevention_SupportPolicy
+  ```
+
+  <Note>
+    If you're experiencing access violations, the issue may be related to your system's DEP configuration.
+  </Note>
+</Accordion>
+
+<Accordion title="Missing Warehouse Items">
+  <Warning>
+    Several reports have been received about missing warehouse items. This issue is typically caused by third-party teleport features.
+  </Warning>
+
+  ### Root Cause
+
+  Players who reported this issue had a teleport feature that sends invalid `0x50A` packets to the server:
+
+  ```
+  SEND >> 0A 05 06 01
+  SEND >> 0A 05 06 02
+  SEND >> 0A 05 06 03
+  ...
+  ```
+
+  The bag value is `6`, which is an out-of-range subscript. The `CUser` class has the following memory structure:
+
+  ```cpp
+  Array<Array<CItem*, 24>, 6> inventory;  //0x1C0
+  Array<CItem*, 240> warehouse;           //0x400
+  ```
+
+  ### Memory Alignment Issue
+
+  Due to the memory layout:
+
+  ```
+                     0x1C0 -> inventory[0][0]
+  (24 * 4) + 0x1C0 = 0x220 -> inventory[1][0]
+  (24 * 4) + 0x220 = 0x280 -> inventory[2][0]
+  (24 * 4) + 0x280 = 0x2E0 -> inventory[3][0]
+  (24 * 4) + 0x2E0 = 0x340 -> inventory[4][0]
+  (24 * 4) + 0x340 = 0x3A0 -> inventory[5][0]
+  (24 * 4) + 0x3A0 = 0x400 -> warehouse[0]
+  ```
+
+  When an invalid packet uses bag value `6`:
+
+  ```cpp
+  inventory[6][0] = 0x400 -> warehouse[0]
+  inventory[6][1] = 0x404 -> warehouse[1]
+  inventory[6][2] = 0x408 -> warehouse[2]
+  // ... and so on
+  ```
+
+  <Note>
+    Do not use teleport features that send invalid packet data to the server, as they will corrupt your warehouse items.
+  </Note>
+</Accordion>
+
+<Accordion title="File Operations Issues (GetModuleFileNameW)">
+  ### The Issue
+
+  Some users experienced issues with file operations when importing the libraries instead of injecting them.
+
+  The following code was implemented to handle this:
+
+  ```cpp
+  std::wstring output(INT16_MAX, 0);
+  auto count = GetModuleFileNameW(nullptr, output.data(), INT16_MAX);
+  if (!count)
+      return;
+
+  auto first = output.begin();
+  auto last = first + count;
+  m_root.assign(first, last).remove_filename();
+  ```
+
+  ### Why This Happens
+
+  When `std::filesystem::current_path` is called before the current working directory is resolved:
+
+  ```cpp
+  auto path = std::filesystem::current_path();
+  // result: "C:\\WINDOWS\\system32"
+  ```
+
+  A relative path doesn't work either in this scenario.
+
+  ### INT16_MAX Explanation
+
+  The machine code for `GetModuleFileNameW` was analyzed to determine the proper buffer size:
+
+  ```asm
+  KERNELBASE.GetModuleFileNameW+19 - B8 FF7F0000 - mov eax,00007FFF ; 32767
+  KERNELBASE.GetModuleFileNameW+1E - 3B F0       - cmp esi,eax
+  KERNELBASE.GetModuleFileNameW+20 - 77 6A       - ja KERNELBASE.GetModuleFileNameW+8C
+  ...
+  KERNELBASE.GetModuleFileNameW+8C - 8B F0       - mov esi,eax
+  KERNELBASE.GetModuleFileNameW+8E - EB 96       - jmp KERNELBASE.GetModuleFileNameW+26
+  ```
+
+  <Note>
+    The maximum size (`INT16_MAX = 32767`) is used instead of `MAX_PATH` to avoid limitations.
+  </Note>
+</Accordion>
+
+<Accordion title="Antivirus False Positives">
+  ### VirusTotal Detections
+
+  Some antivirus software may flag the Episode 6 files as potential threats. These are false positives.
+
+  ### What's Being Done
+
+  Files in this repository are submitted to antivirus companies for analysis when viruses are detected during VirusTotal scans.
+
+  ### Report False Positives
+
+  VirusTotal provides a list of false positive [contacts](https://docs.virustotal.com/docs/false-positive-contacts) where you can report detections to antivirus vendors.
+
+  <Note>
+    If your antivirus software is blocking the files, you may need to add an exception for the Episode 6 directory.
+  </Note>
+</Accordion>
+
+<Accordion title="Cheat Engine Compatibility">
+  <Warning>
+    Cheat Engine isn't guaranteed to work for everyone.
+  </Warning>
+
+  ### Recommended Version
+
+  It's recommended to use **Cheat Engine 7.3** because users have reported issues with newer versions.
+
+  <Note>
+    If you're experiencing issues with Cheat Engine injection, try downgrading to version 7.3.
+  </Note>
+</Accordion>

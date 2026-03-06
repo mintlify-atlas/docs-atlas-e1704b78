@@ -1,0 +1,270 @@
+---
+title: Chaotic Squares
+description: Equipment crafting and enhancement system with success rate modifiers
+---
+
+The Chaotic Squares feature provides an equipment crafting and enhancement system with configurable success rates. Players can use fortune money and crafting hammers to improve their chances of successful enhancement.
+
+## Overview
+
+Chaotic Squares allows players to:
+- Craft and enhance equipment using chaotic squares
+- Increase success rates with fortune money
+- Use crafting hammers for additional success bonuses
+- Configure enhancement parameters via INI file
+
+<Note>
+The library expects **ChaoticSquare.ini** to be in the **PSM_Client/Bin/Data** directory.
+</Note>
+
+## Configuration
+
+### File Location
+
+```plaintext title="Configuration File Path"
+PSM_Client/Bin/Data/ChaoticSquare.ini
+```
+
+<Steps>
+  <Step title="Create Configuration File">
+    Create or edit `ChaoticSquare.ini` with your desired enhancement settings.
+  </Step>
+
+  <Step title="Configure Success Rates">
+    Set base success rates and modifiers for different enhancement levels.
+  </Step>
+
+  <Step title="Place Configuration File">
+    Place the file in `PSM_Client/Bin/Data/ChaoticSquare.ini` on the server.
+  </Step>
+
+  <Step title="Restart Server">
+    Restart the game service to load the new configuration.
+  </Step>
+</Steps>
+
+## Fortune Money
+
+Fortune Money is a currency that can be used to increase the success rate of chaotic square enhancements.
+
+### Default Configuration
+
+<ParamField path="Default Value" type="number">
+  100,000,000 (100 million)
+</ParamField>
+
+<ParamField path="Requirements" type="constraints">
+  - Value must be nonzero
+  - Value must be evenly divisible by 100
+</ParamField>
+
+### Success Rate Calculation
+
+The fortune money contribution to success rate is calculated as follows:
+
+```cpp title="Fortune Money Success Rate Bonus"
+// Chance increases by 1% per whole value given (can be fractional)
+// Maximum bonus is limited to 5%
+
+auto fortuneMoneyBonus = min(moneyContributed / fortuneMoneyDefault, 5.0);
+```
+
+<Warning>
+The success rate bonus from fortune money is capped at 5%. Contributing more than 5x the default value provides no additional benefit.
+</Warning>
+
+### Examples
+
+| Money Contributed | Bonus Percentage | Notes |
+|-------------------|------------------|-------|
+| 0 | 0% | No bonus |
+| 100,000,000 | 1% | 1x default value |
+| 200,000,000 | 2% | 2x default value |
+| 300,000,000 | 3% | 3x default value |
+| 400,000,000 | 4% | 4x default value |
+| 500,000,000 | 5% | 5x default value (maximum) |
+| 600,000,000 | 5% | Capped at maximum |
+
+## Crafting Hammers
+
+Crafting hammers provide an additional success rate bonus when used during chaotic square enhancement.
+
+### Available Hammers
+
+| Item ID | Effect | ReqVg | Success Bonus |
+|---------|--------|-------|---------------|
+| 102074 | 102 | 5 | 5% |
+| 102075 | 102 | 10 | 10% |
+
+<Note>
+The library multiplies the `ReqVg` value by 100 to calculate the success bonus percentage.
+</Note>
+
+### Bonus Calculation
+
+```cpp title="Crafting Hammer Success Bonus"
+// The ReqVg value is multiplied by 100
+auto hammerBonus = item.ReqVg * 100;
+
+// Example: Item 102074 with ReqVg = 5
+auto bonus = 5 * 100; // 500 basis points = 5%
+
+// Example: Item 102075 with ReqVg = 10
+auto bonus = 10 * 100; // 1000 basis points = 10%
+```
+
+### Hammer Usage
+
+<Steps>
+  <Step title="Acquire Crafting Hammer">
+    Obtain a crafting hammer (Item ID 102074 or 102075).
+  </Step>
+
+  <Step title="Access Chaotic Squares">
+    Open the chaotic squares enhancement interface.
+  </Step>
+
+  <Step title="Add Hammer to Enhancement">
+    Place the crafting hammer in the appropriate slot during enhancement.
+  </Step>
+
+  <Step title="Benefit from Bonus">
+    The success rate will increase by the hammer's bonus percentage.
+  </Step>
+</Steps>
+
+## Success Rate Modifiers
+
+### Total Success Rate Calculation
+
+```cpp title="Total Success Rate Formula"
+auto baseRate = /* configured in ChaoticSquare.ini */;
+auto fortuneMoneyBonus = min(moneyContributed / 100000000, 5.0);
+auto hammerBonus = craftingHammer.ReqVg * 100;
+
+auto totalSuccessRate = baseRate + fortuneMoneyBonus + hammerBonus;
+```
+
+### Example Calculation
+
+| Component | Value | Notes |
+|-----------|-------|-------|
+| Base Rate | 30% | From configuration |
+| Fortune Money | 3% | 300,000,000 contributed |
+| Crafting Hammer | 10% | Using Item 102075 |
+| **Total Success Rate** | **43%** | Sum of all modifiers |
+
+## Item Database Configuration
+
+Ensure crafting hammers are properly configured in your item database:
+
+```sql title="Crafting Hammer Configuration"
+-- Configure crafting hammers
+UPDATE Items SET ItemEffect = 102, ReqVg = 5 WHERE ItemID = 102074;
+UPDATE Items SET ItemEffect = 102, ReqVg = 10 WHERE ItemID = 102075;
+```
+
+<Warning>
+The `ReqVg` value must be set correctly for the success bonus to work. The value is multiplied by 100 to determine the percentage bonus.
+</Warning>
+
+## Free Combination
+
+<Warning>
+Free Combination will not be implemented.
+</Warning>
+
+The free combination feature mentioned in some EP6 documentation is not supported by this implementation and will not be added in future updates.
+
+## Configuration File Example
+
+```ini title="ChaoticSquare.ini - Example Configuration"
+[GENERAL]
+FortuneMoney = 100000000
+
+[ENHANCEMENT_1]
+BaseRate = 80
+MinLevel = 0
+MaxLevel = 5
+
+[ENHANCEMENT_2]
+BaseRate = 60
+MinLevel = 6
+MaxLevel = 10
+
+[ENHANCEMENT_3]
+BaseRate = 40
+MinLevel = 11
+MaxLevel = 15
+
+[ENHANCEMENT_4]
+BaseRate = 20
+MinLevel = 16
+MaxLevel = 20
+```
+
+## Best Practices
+
+<Accordion title="Optimizing Success Rates">
+  To maximize your chances of successful enhancement:
+  1. Use the highest tier crafting hammer available (Item 102075 for +10%)
+  2. Contribute 500,000,000 fortune money for the maximum +5% bonus
+  3. Plan enhancements during events if your server offers rate bonuses
+  4. Consider the base rate for your current enhancement level
+</Accordion>
+
+<Accordion title="Economy Considerations">
+  Server administrators should consider:
+  - The default fortune money value affects the in-game economy
+  - Higher requirements = stronger gold sink
+  - Lower requirements = more accessible enhancements
+  - Balance fortune money costs with overall server economy
+</Accordion>
+
+<Accordion title="Item Configuration">
+  When configuring items:
+  - Ensure ReqVg values are divisible by the intended bonus percentage
+  - Test all crafting hammers after configuration changes
+  - Verify item effects match the expected behavior
+  - Document custom item configurations for future reference
+</Accordion>
+
+## Troubleshooting
+
+<Accordion title="Configuration file not loading">
+  Verify:
+  - File is named exactly `ChaoticSquare.ini` (case-sensitive on some systems)
+  - File is in the correct directory: `PSM_Client/Bin/Data/`
+  - File uses proper INI format with sections and key=value pairs
+  - Server has been restarted after configuration changes
+</Accordion>
+
+<Accordion title="Fortune money not providing bonus">
+  Check:
+  - Fortune money value is nonzero in configuration
+  - Fortune money value is evenly divisible by 100
+  - Player has contributed enough money to receive a bonus (100M for 1%)
+  - Success rate cap of 5% is not already reached
+</Accordion>
+
+<Accordion title="Crafting hammer bonus not applying">
+  Verify:
+  - Item has correct ItemEffect value (102)
+  - ReqVg value is set correctly in the database
+  - Item is being placed in the correct slot during enhancement
+  - Server is using the latest compiled version with crafting hammer support
+</Accordion>
+
+<Accordion title="Success rate seems incorrect">
+  Remember:
+  - Success rates are probabilities, not guarantees
+  - Observe multiple attempts to verify actual rate
+  - Check that all modifiers are being calculated correctly
+  - Verify base rates in ChaoticSquare.ini are as expected
+</Accordion>
+
+## Related Features
+
+- **Rune Combination**: Alternative enhancement system using runes and vials
+- **Item Ability Move**: Transfer equipment abilities between items
+- **Perfect Lapisian**: Lapisian enhancement with guaranteed success rates

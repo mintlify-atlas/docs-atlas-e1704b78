@@ -1,0 +1,213 @@
+---
+title: Cooldown Tables
+description: Item and monster skill cooldown reference tables
+---
+
+This page documents the cooldown systems for items and monster skills in Episode 6.
+
+<Note>
+  1000 ticks ≈ 1 second
+</Note>
+
+---
+
+## Item Cooldowns
+
+Item cooldowns are controlled by the `ReqIg` field in the Item data. The cooldown is applied when the item is used.
+
+### Cooldown Table
+
+<ResponseField name="ReqIg" type="integer">
+  The cooldown group identifier for the item. Items with the same `ReqIg` value share a cooldown.
+</ResponseField>
+
+| ReqIg | Ticks   | Seconds | Description |
+|-------|---------|---------|-------------|
+| 0     | 0       | 0s      | No cooldown |
+| 1     | 15000   | ~15s    | Short cooldown |
+| 2     | 20000   | ~20s    | Medium-short cooldown |
+| 3     | 25000   | ~25s    | Medium cooldown |
+| 4     | 30000   | ~30s    | Medium-long cooldown |
+| 5     | 60000   | ~1m     | 1 minute cooldown |
+| 6     | 120000  | ~2m     | 2 minute cooldown |
+| 7     | 0       | 0s      | No cooldown |
+| 8     | 0       | 0s      | No cooldown |
+| 9     | 0       | 0s      | No cooldown |
+| 10    | 600000  | ~10m    | 10 minute cooldown |
+| 11    | 2000    | ~2s     | Very short cooldown |
+
+### Lapis Combination
+
+For Alchemy lapis combination, the client only allows `ReqIg` values 31 through 40.
+
+<Accordion title="Lapis Combination Requirements">
+  <ParamField path="ReqIg" type="integer" required>
+    Must be between 31 and 40 for lapis combination.
+  </ParamField>
+  
+  <ParamField path="Crowley Essence" type="item">
+    Required for `ReqIg` values ≥ 36.
+    
+    - **ItemID:** 100247
+    - **ItemEffect:** 85
+  </ParamField>
+  
+  The client does not allow more than one lapis from the same stack.
+</Accordion>
+
+### Usage Examples
+
+<CodeGroup>
+```sql Item Query
+SELECT ItemID, ItemName, ReqIg 
+FROM Items 
+WHERE ReqIg IN (1,2,3,4,5,6,10,11)
+```
+
+```sql Potion Cooldowns
+-- Example: Health potions with 15s cooldown
+UPDATE Items 
+SET ReqIg = 1 
+WHERE ItemID IN (100001, 100002, 100003)
+```
+</CodeGroup>
+
+---
+
+## Monster Skill Cooldowns
+
+Monster skill cooldowns are controlled by the `AttackSpecial3` field in the Monster data. This determines how frequently a monster can use special attacks or skills.
+
+### Cooldown Table
+
+<ResponseField name="AttackSpecial3" type="integer">
+  The cooldown identifier for monster special attacks.
+</ResponseField>
+
+| AttackSpecial3 | Ticks     | Duration      | Use Case |
+|----------------|-----------|---------------|----------|
+| 0              | 5000      | ~5s           | Very frequent attacks |
+| 1              | 30000     | ~30s          | Frequent attacks |
+| 2              | 60000     | ~1m           | Regular attacks |
+| 3              | 180000    | ~3m           | Infrequent attacks |
+| 4              | 300000    | ~5m           | Rare attacks |
+| 5              | 900000    | ~15m          | Very rare attacks |
+| 6              | 1800000   | ~30m          | Half-hourly |
+| 7              | 3600000   | ~1h           | Hourly |
+| 8              | 14400000  | ~4h           | Every 4 hours |
+| 9              | 43200000  | ~12h          | Twice daily |
+| 10             | 86400000  | ~24h          | Daily |
+| 11             | 259200000 | ~3d           | Every 3 days |
+| 12             | 7200000   | ~2h           | Every 2 hours |
+| 13             | 0         | 0s            | No cooldown |
+| 14             | 604800000 | ~7d           | Weekly |
+| 15             | 15000     | ~15s          | Short cooldown |
+
+### Monster Design Guidelines
+
+<CardGroup cols={2}>
+  <Card title="Trash Mobs" icon="bug">
+    Use `AttackSpecial3` values **0-2** for regular monsters that should use skills frequently (5s-1m).
+  </Card>
+  
+  <Card title="Elite Mobs" icon="shield">
+    Use values **3-4** for elite monsters with impactful abilities (3m-5m).
+  </Card>
+  
+  <Card title="Boss Mechanics" icon="dragon">
+    Use values **5-7** for boss monsters with powerful phase abilities (15m-1h).
+  </Card>
+  
+  <Card title="World Bosses" icon="earth">
+    Use values **8-14** for unique world bosses and timed events (4h-7d).
+  </Card>
+</CardGroup>
+
+### Usage Examples
+
+<CodeGroup>
+```sql Monster Query
+SELECT MobID, MobName, AttackSpecial3
+FROM Monster
+WHERE AttackSpecial3 > 0
+```
+
+```sql Boss Configuration
+-- Example: Set raid boss special attack to 15 minute cooldown
+UPDATE Monster
+SET AttackSpecial3 = 5
+WHERE MobID = 10001
+```
+
+```lua Lua AI Example
+-- In monster Lua script, the cooldown is handled automatically
+function WhileCombat(dwTime, dwHPPercent, dwAttackedCount)
+    if (dwHPPercent < 50) then
+        -- Use special skill (cooldown controlled by AttackSpecial3)
+        Mob:LuaAttackAI(dwSkillId, dwCharId)
+    end
+end
+```
+</CodeGroup>
+
+---
+
+## Cooldown Best Practices
+
+<AccordionGroup>
+  <Accordion title="Item Cooldown Sharing">
+    Items with the same `ReqIg` value share a cooldown. Use this to prevent players from stacking similar consumables.
+    
+    **Example:** All health potions should have `ReqIg = 1` to prevent spam-healing.
+  </Accordion>
+  
+  <Accordion title="Balance Considerations">
+    - **Short cooldowns (0-2)**: Use for frequently used items like potions
+    - **Medium cooldowns (3-6)**: Use for buffs and utility items
+    - **Long cooldowns (10)**: Use for powerful items or teleport scrolls
+    
+    For monsters:
+    - **0-2**: Regular combat skills
+    - **3-5**: Special abilities
+    - **6+**: Unique boss mechanics
+  </Accordion>
+  
+  <Accordion title="Testing Cooldowns">
+    Convert ticks to seconds for testing:
+    
+    ```
+    seconds = ticks / 1000
+    
+    Example:
+    15000 ticks = 15 seconds
+    600000 ticks = 600 seconds = 10 minutes
+    ```
+    
+    <Note>
+      The conversion is approximate. Server tick rate may vary slightly.
+    </Note>
+  </Accordion>
+  
+  <Accordion title="No Cooldown Values">
+    `ReqIg` values **7, 8, 9** and `AttackSpecial3` value **13** have no cooldown (0 ticks).
+    
+    Use these for:
+    - Quest items that shouldn't have cooldowns
+    - Passive items
+    - Monsters that should spam abilities
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Related Configuration
+
+<CardGroup cols={2}>
+  <Card title="Lua API" icon="code" href="/reference/lua-api">
+    Learn how to use cooldowns in monster AI scripts
+  </Card>
+  
+  <Card title="Data Formats" icon="database" href="/reference/data-formats">
+    Understanding Item and Monster SData structure
+  </Card>
+</CardGroup>
