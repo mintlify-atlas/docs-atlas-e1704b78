@@ -1,0 +1,119 @@
+{
+  "projectType": "general",
+  "projectName": "Shaiya Episode 6",
+  "projectDescription": "C++ libraries for improving Episode 6 support in Shaiya private servers",
+  "theme": "aspen",
+  "primaryColor": "#8B4513",
+  "lightColor": "#D2691E",
+  "darkColor": "#5C2E0A",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "prerequisites",
+              "installation"
+            ]
+          },
+          {
+            "group": "Server Libraries",
+            "pages": [
+              "server/sdev",
+              "server/sdev-db",
+              "server/sdev-login"
+            ]
+          },
+          {
+            "group": "Client Library",
+            "pages": [
+              "client/sdev-client"
+            ]
+          },
+          {
+            "group": "Core Libraries",
+            "pages": [
+              "core/shaiya",
+              "core/util",
+              "core/extensions"
+            ]
+          },
+          {
+            "group": "Features",
+            "pages": [
+              "features/item-mall",
+              "features/item-repair",
+              "features/battlefield-move",
+              "features/reward-item",
+              "features/rune-combination",
+              "features/chaotic-squares",
+              "features/synergy",
+              "features/item-ability-move",
+              "features/perfect-lapisian",
+              "features/lapisian-remake",
+              "features/revenge-mark",
+              "features/skill-abilities"
+            ]
+          },
+          {
+            "group": "Reference",
+            "pages": [
+              "reference/configuration",
+              "reference/data-formats",
+              "reference/lua-api",
+              "reference/cooldowns"
+            ]
+          },
+          {
+            "group": "Additional Information",
+            "pages": [
+              "troubleshooting",
+              "contributing",
+              "changelog"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Episode 6 game service library with Item Mall, Battlefield Move, and Reward Item features",
+    "Client modifications for PT 182 client with battlefield move and chat exploit fixes",
+    "Database agent service with character list and name availability support",
+    "Login service vulnerability patches",
+    "Skill abilities support (70, 87, 35)",
+    "Rune combination, Chaotic Squares, and Item Synergy systems",
+    "Item ability transfer and Perfect Lapisian mechanics",
+    "Revenge Mark kill tracking with visual effects",
+    "Lua API for monster AI scripting",
+    "Episode 6 NpcQuest format support with 6 quest results",
+    "Item repair cost calculations for EP5 and EP6.4",
+    "Town move scrolls and item effect handling"
+  ],
+  "publicApiSurface": [
+    "sdev.dll - Game service library export",
+    "sdev-client.dll - Client library export",
+    "sdev-db.dll - Database agent library export",
+    "sdev-login.dll - Login service library export",
+    "util.lib - Memory utilities",
+    "shaiya.lib - Common types and packets",
+    "BattlefieldMoveInfo.ini - Battlefield configuration",
+    "OnlineTimePrize.ini - Reward item configuration",
+    "ChaoticSquare.ini - Crafting configuration",
+    "SetItem.ini - Item synergy configuration",
+    "Map.ini - Zone configuration",
+    "Mob:LuaGetNumberAggro()",
+    "Mob:LuaSay()",
+    "Mob:LuaCreateMob()",
+    "Mob:LuaAttackAI()",
+    "Mob:LuaRecallUser()",
+    "Mob:LuaRecover()",
+    "usp_Read_User_CashPoint_UsersMaster",
+    "usp_Save_User_BuyPointItems2",
+    "usp_Save_User_GiftPointItems2",
+    "usp_Update_UserPoint"
+  ]
+}
